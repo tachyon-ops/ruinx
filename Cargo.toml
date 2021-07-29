@@ -1,0 +1,39 @@
+[package]
+edition = "2018"
+name = "rust_jsx_app"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+futures = "0.3.8"
+macroquad = {git = "https://github.com/not-fl3/macroquad", version = "*", default-features = false}
+
+# [target.'cfg(not(target_os = "android"))'.dependencies]
+# [target.'cfg(target_os = "android")'.dependencies]
+# macroquad = "0.3.1"
+
+# Docs: https://lib.rs/crates/cargo-quad-apk
+[package.metadata.android]
+android_version = 30
+min_sdk_version = 26
+package_name = "io.nmpribeiro.rust_jsx_app"
+target_sdk_version = 30
+# DEBUG
+build_targets = ["armv7-linux-androideabi"]
+# ALL
+# build_targets = [ "armv7-linux-androideabi", "aarch64-linux-android", "i686-linux-android", "x86_64-linux-android" ]
+assets = "assets/"
+# USER DEFINED
+label = "Rust JSX UI"
+version_code = 1
+version_name = "Bambi"
+
+[lib]
+crate-type = ["staticlib"]
+
+[profiles.dev]
+apple-universal = true
+
+[profiles.release]
+apple-universal = true
