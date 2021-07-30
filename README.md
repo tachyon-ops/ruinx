@@ -124,3 +124,10 @@ For debug or build you can do `./android.sh -b` (-b or --build) or `./android.sh
 `cargo quad-apk build --release`
 
 An apk will be in `target/android-artifacts/debug/apk` or `target/android-artifacts/release/apk`.
+
+## Resources
+
+### Scripting languages
+
+Have a look at this cool exploration of rust scrtipting lang ecosystem as of 2021 [here](https://www.boringcactus.com/2020/09/16/survey-of-rust-embeddable-scripting-languages.html#duckscript).
+We went for Dyon

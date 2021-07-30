@@ -8,10 +8,10 @@ version = "0.1.0"
 [dependencies]
 futures = "0.3.8"
 macroquad = {git = "https://github.com/not-fl3/macroquad", version = "*", default-features = false}
-
-# [target.'cfg(not(target_os = "android"))'.dependencies]
-# [target.'cfg(target_os = "android")'.dependencies]
-# macroquad = "0.3.1"
+rsx_loader = {path = "./rsx_loader"}
+rsx_ui = {path = "./rsx_ui"}
+sentry = "0.23.0"
+uuid = {version = "0.8", features = ["v4"]}
 
 # Docs: https://lib.rs/crates/cargo-quad-apk
 [package.metadata.android]
