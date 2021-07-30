@@ -2,9 +2,7 @@
 
 A cool experiment to create a Rust UI using JSX
 
-## To build iOS
-
-- `cd ios` and then `./build.sh`
+## iOS BUILD
 
 ## Build & Run
 
@@ -36,7 +34,7 @@ cd ios
 
 Open xcode, open the project and build.
 
-## To build android
+## Android BUILD
 
 ### Installing pre-requisites
 
@@ -46,7 +44,7 @@ Exact commands and pathes may depend on the host OS. Here linux commands are use
 
 This step highly depends on the OS, for ubuntu:
 
-`sudo apt-get install openjdk-8-jdk``
+`sudo apt-get install openjdk-8-jdk`
 
 #### Rust android
 
@@ -111,9 +109,11 @@ export NDK_VERSION=21.4.7075529
 export NDK_HOME=$ANDROID_SDK_ROOT/ndk/$NDK_VERSION
 ```
 
+#### android.sh
+
 Once you have my environmental variables, a bash script `android.sh` was made for your convenience.
 
-For debug or build you ca do `./android.sh -b` (-b or --build) or `./android.sh -r` (-r or --release).
+For debug or build you can do `./android.sh -b` (-b or --build) or `./android.sh -r` (-r or --release).
 
 #### for a debug build
 
