@@ -6,7 +6,8 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-macroquad = {git = "https://github.com/not-fl3/macroquad", version = "*", default-features = false}
+snd = "0.0.0"
+macroquad = "0.3.7"
 rsx-parser = {git = "https://github.com/nmpribeiro/rsx-parser.git"}
 uuid = {version = "0.8", features = ["v4"]}
 dyon = "0.46.0"

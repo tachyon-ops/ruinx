@@ -49,6 +49,8 @@ targets:
       - sdk: OpenGLES.framework
       - sdk: Metal.framework
       - sdk: GLKit.framework
+      - sdk: CoreAudio.framework
+      - sdk: AudioToolbox.framework
       - sdk: Security.framework
       - sdk: UIKit.framework
       - target: cargo_ios
