@@ -2,17 +2,16 @@ pub mod dom;
 pub mod event;
 // pub mod widgets;
 
+use macroquad::{miniquad::Context, prelude::*};
+
 // Pushrod
 use event::Event;
-// use widgets::WidgetCache;
 
 // Our own
 use dom::UiDom;
 use uuid::Uuid;
 
-// System
-use std::thread::sleep;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use crate::app_mode::AppMode;
 
 // SDL
 // use sdl2::video::Window;
@@ -33,12 +32,25 @@ pub trait EventHandler {
     // fn build_layout(&mut self, cache: &mut WidgetCache);
     fn build_layout(&mut self, dom: &mut UiDom);
 }
+
+struct Stage;
+
+impl miniquad::EventHandler for Stage {
+    fn update(&mut self, _ctx: &mut Context) {
+        println!("Update");
+    }
+    fn draw(&mut self, _ctx: &mut Context) {
+        println!("Draw");
+    }
+    // fn resize_event(&mut self, _ctx: &mut Context, _width: f32, _height: f32) {}
+}
+
 pub struct Engine {
     current_view_uuid: Uuid,
     handler: Box<dyn EventHandler>,
     dom: UiDom,
     running: bool,
-    editor_mode: bool,
+    app_mode: AppMode,
 }
 
 /// This is an implementation of `Pushrod`, the main loop handler.  Multiple `Pushrod`s
@@ -48,47 +60,86 @@ impl Engine {
     /// Creates a new `Pushrod` run loop, taking a reference to the `EventHandler` that handles
     /// run loop events for this `Window`.
     // pub fn new(handler: Box<dyn EventHandler>, window: &Window, editor_mode: bool) -> Self {
-    pub fn new(handler: Box<dyn EventHandler>, editor_mode: bool) -> Self {
-        todo!();
-        // let dom = UiDom::new(window.size());
-        // Self {
-        //     current_view_uuid: dom.root.uuid,
-        //     handler,
-        //     dom, // WidgetCache::new(window.size().0, window.size().1),
-        //     running: true,
-        //     editor_mode,
-        // }
+    pub fn new(handler: Box<dyn EventHandler>, app_mode: AppMode) -> Self {
+        let dom = UiDom::new((screen_width() as u32, screen_height() as u32));
+        Self {
+            current_view_uuid: dom.root.uuid,
+            handler,
+            dom, // WidgetCache::new(window.size().0, window.size().1),
+            running: true,
+            app_mode,
+        }
     }
-
-    /// Stops the Pushrod run loop.
-    // pub fn stop(&mut self) {
-    //     self.running = false;
-    // }
-
-    // /// Retrieves the `WidgetCache`.
-    // pub fn get_cache(&mut self) -> &mut WidgetCache {
-    //     &mut self.cache
-    // }
 
     /// This is the main event handler for the application.  It handles all of the events generated
     /// by the `SDL2` manager, and translates them into events that can be used by the `handle_event`
     /// method.
     // pub fn run(&mut self, sdl: Sdl, window: Window) {
-    pub fn run(&mut self) {
-        // let mut event_pump = sdl.event_pump().unwrap();
-        // let fps_as_ms = (1000.0 / 60_f64) as u128;
-        // let mut canvas = window
-        //     .into_canvas()
-        //     .target_texture()
-        //     .accelerated()
-        //     .build()
-        //     .unwrap();
-
+    pub async fn run(&mut self) {
         // // Call handler.build_layout() - this allows the application to build its `Window` contents,
         // // preparing the application for use.  (This is where the deserialization will occur.)
-        // self.handler.build_layout(&mut self.dom);
+        self.handler.build_layout(&mut self.dom);
 
-        // let mut first_run = true;
+        let mut stage = Stage {};
+        let index = macroquad::input::utils::register_input_subscriber();
+
+        let mut x = 100.0;
+        let mut y = 100.0;
+
+        loop {
+            println!("___________________ LOOP ___________________");
+            clear_background(RED);
+
+            draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
+            draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
+            draw_circle(screen_width() - 30.0, screen_height() - 30.0, 15.0, YELLOW);
+
+            draw_text("IT WORKS!", 20.0, 20.0, 30.0, DARKGRAY);
+
+            for touch in touches() {
+                let (fill_color, size) = match touch.phase {
+                    TouchPhase::Started => (GREEN, 80.0),
+                    TouchPhase::Stationary => (WHITE, 60.0),
+                    TouchPhase::Moved => (YELLOW, 60.0),
+                    TouchPhase::Ended => (BLUE, 80.0),
+                    TouchPhase::Cancelled => (BLACK, 80.0),
+                };
+                draw_circle(touch.position.x, touch.position.y, size, fill_color);
+            }
+
+            if is_key_down(KeyCode::Right) {
+                x += 1.0;
+            }
+            if is_key_down(KeyCode::Left) {
+                x -= 1.0;
+            }
+            if is_key_down(KeyCode::Down) {
+                y += 1.0;
+            }
+            if is_key_down(KeyCode::Up) {
+                y -= 1.0;
+            }
+
+            draw_circle(x, y, 15.0, YELLOW);
+
+            if self.app_mode == AppMode::EDITOR {
+                // do event polling
+            }
+
+            macroquad::input::utils::repeat_all_miniquad_input(&mut stage, index);
+
+            // println!(
+            //     "condition touches().is_empty() || get_last_key_pressed().is_none() : {}",
+            //     touches().is_empty() || get_last_key_pressed().is_none()
+            // );
+            // while touches().is_empty() || get_last_key_pressed().is_none() {
+            //     println!("Inside condition");
+            //     // next_frame().await;
+            //     std::thread::sleep(std::time::Duration::new(0, 100));
+            // }
+
+            next_frame().await
+        }
 
         // 'running: loop {
         //     let start = SystemTime::now()

@@ -2334,6 +2334,7 @@ dependencies = [
  "dyon",
  "macroquad",
  "rsx-parser",
+ "rsx_loader",
  "snd",
  "uuid 0.8.2",
 ]

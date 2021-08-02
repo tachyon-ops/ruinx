@@ -8,11 +8,11 @@ use super::super::engine::EventHandler;
 use crate::engine::dom::view::View;
 
 pub struct UiExample {
-    ast: RSXElement,
+    ast: Option<RSXElement>,
 }
 
 impl UiExample {
-    pub fn new(ast: RSXElement) -> Self {
+    pub fn new(ast: Option<RSXElement>) -> Self {
         Self { ast }
     }
 }

@@ -1,6 +1,6 @@
 use super::engine::Engine;
 
-mod example;
+pub mod example;
 use example::UiExample;
 use rsx_parser::types::RSXElement;
 
