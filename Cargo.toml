@@ -6,12 +6,14 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-futures = "0.3.8"
-macroquad = "0.3.7"
-rsx_loader = {path = "./rsx_loader"}
-rsx_ui = {path = "./rsx_ui"}
-sentry = "0.23.0"
-uuid = {version = "0.8", features = ["v4"]}
+cgmath = "0.18"
+env_logger = "0.9"
+image = "0.23"
+log = "0.4"
+pollster = "0.2"
+wgpu = "0.9"
+winit = {git = "https://github.com/nmpribeiro/winit.git", branch="fix/ios"}
+# winit = {path = "../github/winit"}
 
 # Docs: https://lib.rs/crates/cargo-quad-apk
 [package.metadata.android]
@@ -30,7 +32,7 @@ version_code = 1
 version_name = "Bambi"
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "lib"]
 
 [profiles.dev]
 apple-universal = true
