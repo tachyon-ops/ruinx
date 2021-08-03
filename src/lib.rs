@@ -1,27 +1,9 @@
-use wgpu::{Adapter, Surface, TextureFormat};
 use winit::{
     dpi::PhysicalSize,
     event::{ElementState, Event, KeyboardInput, StartCause, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
 };
-
-fn get_preferred_format(adapter: Adapter, surface: &Surface) -> TextureFormat {
-    #[cfg(target_arch = "android")]
-    return TextureFormat::Rgba16Float;
-
-    #[cfg(not(target_arch = "android"))]
-    {
-        adapter.get_swap_chain_preferred_format(&surface);
-        let preferred_format_opt = adapter.get_swap_chain_preferred_format(&surface);
-        let mut preferred_format = TextureFormat::Rgba16Float;
-        match preferred_format_opt {
-            Some(format) => preferred_format = format,
-            None => {}
-        }
-        preferred_format
-    }
-}
 
 fn wait_for_native_window() {
     log::info!("Will now wait for native window");
@@ -103,7 +85,7 @@ impl State {
         log::info!("Swap chain Descriptor");
         let sc_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            // format: TextureFormat::Rgba16Float, // preferred_format,
+            // format: TextureFormat::Rgba16Float, // preferred_format for android emulator?,
             format: preferred_format,
             width: size.width,
             height: size.height,
@@ -117,7 +99,11 @@ impl State {
         #[cfg(target_arch = "android")]
         let shader_str = include_str!("assets/shader.wgsl");
 
+        #[cfg(target_arch = "ios")]
+        let shader_str = include_str!("assets/shader.wgsl");
+
         #[cfg(not(target_arch = "android"))]
+        #[cfg(not(target_arch = "ios"))]
         let shader_str = include_str!("shader.wgsl");
 
         log::info!("My shader: {}", shader_str);
