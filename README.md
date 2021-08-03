@@ -125,6 +125,11 @@ For debug or build you can do `./android.sh -b` (-b or --build) or `./android.sh
 
 An apk will be in `target/android-artifacts/debug/apk` or `target/android-artifacts/release/apk`.
 
+##### Log android
+
+`adb shell pidof -s io.nmpribeiro.rust_jsx_app`
+`adb shell pidof -s [PID]`
+
 ## Resources
 
 ### Scripting languages
