@@ -26,10 +26,21 @@ fn wait_for_native_window() {
 fn block_until_has_size(window: &Window) -> PhysicalSize<u32> {
     let mut size = window.inner_size();
 
-    while size.width == 0 {
-        wait_for_native_window();
+    let mut condition = true;
+    let mut i = 0;
+    while condition {
+        std::thread::sleep(std::time::Duration::from_millis(250));
+        // wait_for_native_window();
         size = window.inner_size();
         log::info!("Window size is {} x {}", size.width, size.height);
+
+        if size.width != 0 {
+            condition = false;
+        }
+        if i >= 20 {
+            condition = false;
+        }
+        i = i + 1;
     }
     log::info!("Window size is {} x {}", size.width, size.height);
     size
@@ -329,6 +340,8 @@ fn initialize_logger() {
 }
 
 fn main() {
+    wait_for_native_window();
+
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
