@@ -53,9 +53,9 @@ for i in "$@"; do
 		# for a debug build
 		BUILD_MODE="debug"
 		#build the libraries
-		RUST_LOG=my_app=trace RUST_BACKTRACE=full cargo build --target aarch64-linux-android
-		RUST_LOG=my_app=trace RUST_BACKTRACE=full cargo build --target armv7-linux-androideabi
-		RUST_LOG=my_app=trace RUST_BACKTRACE=full cargo build --target i686-linux-android
+		RUST_LOG=trace RUST_BACKTRACE=full cargo build --target aarch64-linux-android
+		RUST_LOG=trace RUST_BACKTRACE=full cargo build --target armv7-linux-androideabi
+		RUST_LOG=trace RUST_BACKTRACE=full cargo build --target i686-linux-android
 		;;
 	-r |  --release)
 		# for release build

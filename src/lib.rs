@@ -1,15 +1,24 @@
+use std::borrow::Cow;
 use winit::{
     dpi::PhysicalSize,
-    event::{ElementState, Event, KeyboardInput, StartCause, VirtualKeyCode, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
+    event::{Event, WindowEvent},
+    event_loop::ControlFlow,
+    window::Window,
 };
+
+struct Extent2D {
+    width: u32,
+    height: u32,
+}
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+const DIMS: Extent2D = Extent2D { width: 1024, height: 768 };
 
 fn wait_for_native_window() {
     log::info!("Will now wait for native window");
-    #[cfg(target_arch = "android")]
+    #[cfg(target_os = "android")]
     {
-        log::info!("Waiting for NativeScreen");
+        log::info!("App started. Waiting for NativeScreen");
         loop {
             match ndk_glue::native_window().as_ref() {
                 Some(_) => {
@@ -23,308 +32,386 @@ fn wait_for_native_window() {
     log::info!("Proceeding after native window");
 }
 
-fn block_until_has_size(window: &Window) -> PhysicalSize<u32> {
-    let mut size = window.inner_size();
+// fn block_until_has_size(window: &Window) -> PhysicalSize<u32> {
+//     let mut size = window.inner_size();
 
-    let mut condition = true;
-    let mut i = 0;
-    while condition {
-        std::thread::sleep(std::time::Duration::from_millis(250));
-        // wait_for_native_window();
-        size = window.inner_size();
-        log::info!("Window size is {} x {}", size.width, size.height);
+//     let mut condition = true;
+//     let mut i = 0;
+//     while condition {
+//         std::thread::sleep(std::time::Duration::from_millis(250));
+//         // wait_for_native_window();
+//         size = window.inner_size();
+//         log::info!("Window size is {} x {}", size.width, size.height);
 
-        if size.width != 0 {
-            condition = false;
-        }
-        if i >= 20 {
-            condition = false;
-        }
-        i = i + 1;
-    }
-    log::info!("Window size is {} x {}", size.width, size.height);
-    size
-}
+//         if size.width != 0 {
+//             condition = false;
+//         }
+//         if i >= 20 {
+//             condition = false;
+//         }
+//         i = i + 1;
+//     }
+//     log::info!("Window size is {} x {}", size.width, size.height);
+//     size
+// }
 
 struct State {
+    window: Window,
+
     suspended: bool,
-    surface: wgpu::Surface,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    sc_desc: wgpu::SwapChainDescriptor,
-    swap_chain: wgpu::SwapChain,
-    size: winit::dpi::PhysicalSize<u32>,
-    render_pipeline: wgpu::RenderPipeline,
+    surface: Option<wgpu::Surface>,
+    adapter: Option<wgpu::Adapter>,
+    device: Option<wgpu::Device>,
+    queue: Option<wgpu::Queue>,
+    sc_desc: Option<wgpu::SwapChainDescriptor>,
+    swap_chain: Option<wgpu::SwapChain>,
+    render_pipeline: Option<wgpu::RenderPipeline>,
 }
 
 impl State {
-    // Creating some of the wgpu types requires async code
-    async fn new(window: &Window) -> Self {
-        let size = block_until_has_size(window);
+    fn new(window: Window) -> Self {
+        Self {
+            window,
+            suspended: true,
+            surface: None,
+            adapter: None,
+            device: None,
+            queue: None,
+            sc_desc: None,
+            swap_chain: None,
+            render_pipeline: None,
+        }
+    }
 
-        // The instance is a handle to our GPU
-        // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
-        let instance = wgpu::Instance::new(wgpu::BackendBit::all());
+    async fn get_surface_adapter_device(&mut self) {
+        if self.suspended {
+            return;
+        }
+        wait_for_native_window();
+        log::info!("Instance");
+
+        let instance;
+        #[cfg(target_os = "android")]
+        {
+            log::info!("------------- Selecting VULKAN -------------");
+            instance = wgpu::Instance::new(wgpu::Backends::VULKAN);
+        }
+
+        #[cfg(not(target_os = "android"))]
+        {
+            instance = wgpu::Instance::new(wgpu::Backends::all());
+        }
 
         log::info!("Surface");
-        let surface = unsafe { instance.create_surface(window) };
+        let surface = unsafe { instance.create_surface(&self.window) };
+        log::info!("Adapter");
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
+                // Request an adapter which can render to our surface
                 compatible_surface: Some(&surface),
             })
             .await
-            .unwrap();
+            .expect("Failed to find an appropriate adapter");
 
-        log::info!("Device");
+        log::info!("Device and Queue!");
+        // Create the logical device and command queue
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default(),
                     label: None,
+                    features: wgpu::Features::empty(),
+                    // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the swapchain.
+                    limits: wgpu::Limits::downlevel_defaults().using_resolution(adapter.limits()),
                 },
-                None, // Trace path
+                None,
             )
             .await
-            .unwrap();
+            .expect("Failed to create device");
 
-        log::info!("Swap chain Descriptor");
+        self.surface = Some(surface);
+        self.adapter = Some(adapter);
+        self.device = Some(device);
+        self.queue = Some(queue);
+    }
 
-        let preferred_format = adapter.get_swap_chain_preferred_format(&surface).unwrap();
+    async fn activate(&mut self) {
+        log::info!("----------------------------------------- Activating!");
+        log::info!("Activating now!");
 
-        log::info!("Swap chain Descriptor");
-        let sc_desc = wgpu::SwapChainDescriptor {
-            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            // format: TextureFormat::Rgba16Float, // preferred_format for android emulator?,
-            format: preferred_format,
-            width: size.width,
-            height: size.height,
-            present_mode: wgpu::PresentMode::Fifo,
-        };
+        let size = self.window.inner_size();
+        log::info!("Size: {} x {}", size.width, size.height);
 
-        log::info!("Swap chain");
-        let swap_chain = device.create_swap_chain(&surface, &sc_desc);
-        log::info!("Swap chain done!");
+        wait_for_native_window();
 
-        #[cfg(target_arch = "android")]
-        let shader_str = include_str!("assets/shader.wgsl");
-
-        #[cfg(target_arch = "ios")]
-        let shader_str = include_str!("assets/shader.wgsl");
-
-        #[cfg(not(target_arch = "android"))]
-        #[cfg(not(target_arch = "ios"))]
-        let shader_str = include_str!("shader.wgsl");
-
-        log::info!("My shader: {}", shader_str);
+        self.get_surface_adapter_device().await;
 
         log::info!("Shader");
+
+        let device;
+        let adapter;
+        match &self.device {
+            Some(d) => device = d,
+            None => {
+                println!("No device found! Will try again next loop iteration.");
+                self.suspend();
+                return;
+            }
+        }
+        match &self.adapter {
+            Some(a) => adapter = a,
+            None => {
+                println!("No adapter found! Will try again next loop iteration.");
+                self.suspend();
+                return;
+            }
+        }
+
+        // Load the shaders from disk
         let shader = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: Some("Shader"),
-            flags: wgpu::ShaderFlags::all(),
-            source: wgpu::ShaderSource::Wgsl(shader_str.into()),
+            label: None,
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
         });
 
-        log::info!("Render pipeline layout");
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[],
-                push_constant_ranges: &[],
-            });
+        log::info!("Pipeline layout");
+        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: None,
+            bind_group_layouts: &[],
+            push_constant_ranges: &[],
+        });
+
+        // Check if surface exists
+        let surface;
+        match &self.surface {
+            Some(s) => surface = s,
+            None => {
+                println!("No surface found! Will try again next loop iteration.");
+                self.suspend();
+                return;
+            }
+        }
+
+        log::info!("Swapchain format");
+        let swapchain_format = adapter.get_swap_chain_preferred_format(&surface).unwrap();
 
         log::info!("Render pipeline");
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline"),
-            layout: Some(&render_pipeline_layout),
+            label: None,
+            layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
-                entry_point: "main", // 1.
-                buffers: &[],        // 2.
+                entry_point: "vs_main",
+                buffers: &[],
             },
             fragment: Some(wgpu::FragmentState {
-                // 3.
                 module: &shader,
-                entry_point: "main",
-                targets: &[wgpu::ColorTargetState {
-                    // 4.
-                    format: sc_desc.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrite::ALL,
-                }],
+                entry_point: "fs_main",
+                targets: &[swapchain_format.into()],
             }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList, // 1.
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw, // 2.
-                cull_mode: Some(wgpu::Face::Back),
-                // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-                polygon_mode: wgpu::PolygonMode::Fill,
-                // Requires Features::DEPTH_CLAMPING
-                clamp_depth: false,
-                // Requires Features::CONSERVATIVE_RASTERIZATION
-                conservative: false,
-            },
-            depth_stencil: None, // 1.
-            multisample: wgpu::MultisampleState {
-                count: 1,                         // 2.
-                mask: !0,                         // 3.
-                alpha_to_coverage_enabled: false, // 4.
-            },
+            primitive: wgpu::PrimitiveState::default(),
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState::default(),
         });
 
-        Self {
-            suspended: false,
-            size,
-            surface,
-            device,
-            queue,
-            sc_desc,
-            swap_chain,
-            render_pipeline,
-        }
+        log::info!("Swapchain description");
+        let sc_desc = wgpu::SwapChainDescriptor {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format: swapchain_format,
+            width: size.width,
+            height: size.height,
+            present_mode: wgpu::PresentMode::Mailbox,
+        };
+
+        log::info!("Swapchain");
+        let swap_chain = device.create_swap_chain(&surface, &sc_desc);
+
+        self.sc_desc = Some(sc_desc);
+        self.swap_chain = Some(swap_chain);
+        self.render_pipeline = Some(render_pipeline);
+
+        self.suspended = false;
     }
 
-    fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+    fn suspend(&mut self) {
+        log::info!("----------------------------------------- Suspending!");
+        self.surface = None;
+        self.adapter = None;
+        self.device = None;
+        self.queue = None;
+        self.sc_desc = None;
+        self.swap_chain = None;
+        self.render_pipeline = None;
+        self.suspended = true;
+    }
+
+    fn resize(&mut self, size: PhysicalSize<u32>) {
+        log::info!("Resizeing: {} x {}", size.width, size.height);
+        // Recreate the swap chain with the new size
+        let surface;
+        let device;
+        let mut sc_desc;
+
+        match &self.surface {
+            Some(val) => surface = val,
+            None => {
+                println!("No surface found during resize!");
+                self.suspend();
+                return;
+            }
+        }
+        match &self.device {
+            Some(val) => device = val,
+            None => {
+                println!("No device found during resize!");
+                self.suspend();
+                return;
+            }
+        }
+
+        match &self.sc_desc {
+            Some(val) => sc_desc = val.to_owned(),
+            None => {
+                println!("No sc_desc found during resize!");
+                self.suspend();
+                return;
+            }
+        }
+        sc_desc.width = size.width;
+        sc_desc.height = size.height;
+        self.swap_chain = Some(device.create_swap_chain(&surface, &sc_desc));
+        self.render();
+    }
+
+    fn render(&mut self) {
+        let swap_chain;
+        let device;
+        let render_pipeline;
+        let queue;
+
+        match &self.swap_chain {
+            Some(val) => swap_chain = val,
+            None => {
+                self.suspend();
+                return;
+            }
+        }
+
+        match &self.device {
+            Some(val) => device = val,
+            None => {
+                self.suspend();
+                return;
+            }
+        }
+
+        match &self.render_pipeline {
+            Some(val) => render_pipeline = val,
+            None => {
+                self.suspend();
+                return;
+            }
+        }
+
+        match &self.queue {
+            Some(val) => queue = val,
+            None => {
+                self.suspend();
+                return;
+            }
+        }
+
         if self.suspended {
             return;
         }
-        self.size = new_size;
-        self.sc_desc.width = new_size.width;
-        self.sc_desc.height = new_size.height;
-        self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
-    }
 
-    fn _input(&mut self, _event: &WindowEvent) -> bool {
-        false
-    }
-
-    fn update(&mut self) {
-        if self.suspended {
-            return;
-        }
-        //
-    }
-
-    fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
-        if self.suspended {
-            return Ok(());
-        }
-
-        let frame = self.swap_chain.get_current_frame()?.output;
-
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
-
+        let frame = swap_chain
+            .get_current_frame()
+            .expect("Failed to acquire next swap chain texture")
+            .output;
+        let mut encoder =
+            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         {
-            // 1.
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[
-                    // This is what [[location(0)]] in the fragment shader targets
-                    wgpu::RenderPassColorAttachment {
-                        view: &frame.view,
-                        resolve_target: None,
-                        ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(wgpu::Color {
-                                r: 0.1,
-                                g: 0.2,
-                                b: 0.3,
-                                a: 1.0,
-                            }),
-                            store: true,
-                        },
+            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: None,
+                color_attachments: &[wgpu::RenderPassColorAttachment {
+                    view: &frame.view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
+                        store: true,
                     },
-                ],
+                }],
                 depth_stencil_attachment: None,
             });
-
-            // NEW!
-            render_pass.set_pipeline(&self.render_pipeline); // 2.
-            render_pass.draw(0..3, 0..1); // 3.
+            rpass.set_pipeline(&render_pipeline);
+            rpass.draw(0..3, 0..1);
         }
 
-        // submit will accept anything that implements IntoIter
-        self.queue.submit(std::iter::once(encoder.finish()));
-
-        Ok(())
+        queue.submit(Some(encoder.finish()));
     }
-
-    // fn suspended(&mut self) {
-    //     self.suspended = true;
-    // }
-    // fn resumed(&mut self) {
-    //     self.suspended = false;
-    // }
 }
 
-fn run(event_loop: EventLoop<()>, window: Window) {
-    log::info!("Inside RUN!");
-    // Since main can't be async, we're going to need to block
-    let mut state = pollster::block_on(State::new(&window));
+pub fn run() {
+    initialize_logger();
 
+    let event_loop = winit::event_loop::EventLoop::new();
+    let wb = winit::window::WindowBuilder::new()
+        .with_min_inner_size(winit::dpi::Size::Logical(winit::dpi::LogicalSize::new(
+            64.0, 64.0,
+        )))
+        .with_inner_size(winit::dpi::Size::Physical(winit::dpi::PhysicalSize::new(
+            DIMS.width,
+            DIMS.height,
+        )))
+        .with_title("quad".to_string());
+
+    // instantiate backend
+    let window = wb.build(&event_loop).unwrap();
+
+    wait_for_native_window();
+
+    let mut state = State::new(window);
+
+    log::info!("    --- EVENT LOOP ---");
     event_loop.run(move |event, _, control_flow| {
+        // Have the closure take ownership of the resources.
+        // `event_loop.run` never returns, therefore we must do this to ensure
+        // the resources are properly cleaned up.
+        // let _ = (&instance, &adapter, &shader, &pipeline_layout);
+
         *control_flow = ControlFlow::Wait;
-
         match event {
-            Event::NewEvents(StartCause::Init) => {
-                log::info!("The app has started!");
+            Event::Resumed => {
+                state.activate();
             }
-            Event::WindowEvent { event, window_id } if window_id == window.id() => match event {
-                WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                WindowEvent::KeyboardInput { input, .. } => {
-                    match input {
-                        KeyboardInput {
-                            state: ElementState::Pressed,
-                            virtual_keycode: Some(VirtualKeyCode::Escape),
-                            ..
-                        } => *control_flow = ControlFlow::Exit,
-                        _ => {}
-                    };
-                }
-                WindowEvent::Resized(physical_size) => state.resize(physical_size),
-                WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                    state.resize(*new_inner_size)
-                }
-                _ => {}
-            },
-
+            Event::Suspended => {
+                state.suspend();
+            }
+            Event::WindowEvent {
+                event: WindowEvent::Resized(size),
+                ..
+            } => {
+                state.resize(size);
+            }
             Event::RedrawRequested(_) => {
-                state.update();
-                match state.render() {
-                    Ok(_) => {}
-                    // Recreate the swap_chain if lost
-                    Err(wgpu::SwapChainError::Lost) => state.resize(state.size),
-                    // The system is out of memory, we should probably quit
-                    Err(wgpu::SwapChainError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                    // All other errors (Outdated, Timeout) should be resolved by the next frame
-                    Err(e) => eprintln!("{:?}", e),
-                }
+                state.render();
             }
+            Event::WindowEvent {
+                event: WindowEvent::CloseRequested,
+                ..
+            } => *control_flow = ControlFlow::Exit,
+            _ => {}
+        } // end of match event
 
-            Event::MainEventsCleared => {
-                // RedrawRequested will only trigger once, unless we manually
-                // request it.
-                window.request_redraw();
-            }
-
-            _ => (),
+        if state.suspended {
+            state.activate();
         }
     });
 }
 
 fn initialize_logger() {
     #[cfg(target_os = "android")]
-    {
-        let _trace;
-        if ndk::trace::is_trace_enabled() {
-            _trace = ndk::trace::Section::new("ndk-rs example main").unwrap();
-        }
-    }
+    android_logger::init_once(android_logger::Config::default().with_min_level(log::Level::Trace));
 
     #[cfg(target_arch = "wasm32")]
     {
@@ -334,49 +421,29 @@ fn initialize_logger() {
 
     #[cfg(not(target_os = "android"))]
     #[cfg(not(target_arch = "wasm32"))]
-    {
-        env_logger::init();
-    }
-}
-
-fn main() {
-    wait_for_native_window();
-
-    let event_loop = EventLoop::new();
-    let window = WindowBuilder::new().build(&event_loop).unwrap();
-
-    initialize_logger();
-
-    #[cfg(not(target_arch = "wasm32"))]
-    run(event_loop, window);
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use winit::platform::web::WindowExtWebSys;
-        // On wasm, append the canvas to the document body
-        web_sys::window()
-            .and_then(|win| win.document())
-            .and_then(|doc| doc.body())
-            .and_then(|body| {
-                body.append_child(&web_sys::Element::from(window.canvas()))
-                    .ok()
-            })
-            .expect("couldn't append canvas to document body");
-        wasm_bindgen_futures::spawn_local(run(event_loop, window));
-    }
+    env_logger::init();
 }
 
 /// Bindings entry point
 #[no_mangle]
 pub extern "C" fn main_rs() {
-    main();
+    run();
 }
 
 // ANativeActivity_onCreate not found: undefined symbol: ANativeActivity_onCreate
+// Backtrace can be "on" or "full"
+#[cfg(target_os = "android")]
 #[cfg_attr(
     target_os = "android",
-    ndk_glue::main(backtrace = "on", logger(level = "debug", tag = "hello-world"))
+    ndk_glue::main(backtrace = "on", logger(level = "debug", tag = "rust-app"))
 )]
-fn _android_entry() {
-    main();
+fn android_entry() {
+    run();
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen(start)]
+pub fn wasm_main() {
+    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+    run();
 }
