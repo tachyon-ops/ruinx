@@ -228,6 +228,7 @@ pub fn entry() {
             None => match event {
                 Event::Resumed => {
                     log::info!("App resumed");
+                    std::thread::sleep(std::time::Duration::from_millis(250));
                     state_ = Some(block_on(State::new(&window)));
                 }
                 _ => {}
