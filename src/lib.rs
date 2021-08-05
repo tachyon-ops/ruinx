@@ -125,7 +125,7 @@ impl State {
     }
 
     fn resize(&mut self, size: PhysicalSize<u32>) {
-        log::info!("Resizeing: {} x {}", size.width, size.height);
+        log::info!("Resizing: {} x {}", size.width, size.height);
         // Recreate the swap chain with the new size
         self.sc_desc.width = size.width;
         self.sc_desc.height = size.height;
