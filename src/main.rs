@@ -1,5 +1,6 @@
-mod lib;
+extern crate rust_jsx_ui;
 
 fn main() {
-    lib::main_rs();
+    env_logger::init();
+    rust_jsx_ui::entry();
 }

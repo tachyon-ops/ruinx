@@ -1,36 +1,56 @@
 [package]
 edition = "2018"
-name = "rust_jsx_app"
+name = "rust_jsx_ui"
+resolver = "2"
 version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-futures = "0.3.8"
-macroquad = "0.3.7"
-rsx_loader = {path = "./rsx_loader"}
-rsx_ui = {path = "./rsx_ui"}
+anyhow = "1.0"
+bytemuck = {version = "1.4", features = ["derive"]}
+cgmath = "0.18"
+env_logger = "0.9"
+futures = "0.3"
+image = "0.23"
+log = "0.4"
+wgpu = "0.9"
+# winit = "0.24"
 sentry = "0.23.0"
-uuid = {version = "0.8", features = ["v4"]}
+winit = {git = "https://github.com/nmpribeiro/winit.git", branch = "fix/ios"}
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.10.1"
+ndk-glue = {version = "0.3.0", features = ["logger"]}
+ndk-sys = "0.2.1"
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.1"
+glob = "0.3"
+shaderc = "0.7"
+
+[package.metadata.android]
+apk_label = "learn-wgpu"
+fullscreen = false
+launch_mode = "singleTask"
+min_sdk_version = 26
+target_sdk_version = 29
+# build_targets = ["aarch64-linux-android"]
+build_targets = ["armv7-linux-androideabi", "aarch64-linux-android", "i686-linux-android", "x86_64-linux-android"]
+
+[[package.metadata.android.feature]]
+name = "android.hardware.vulkan.level"
+version = "1"
+
+[[package.metadata.android.feature]]
+name = "android.hardware.vulkan.version"
+version = "4198400" # v1.1 = 0x00401000
 
 # Docs: https://lib.rs/crates/cargo-quad-apk
-[package.metadata.android]
-android_version = 30
-min_sdk_version = 26
-package_name = "io.nmpribeiro.rust_jsx_app"
-target_sdk_version = 30
-# DEBUG
-build_targets = ["armv7-linux-androideabi"]
-# ALL
-# build_targets = [ "armv7-linux-androideabi", "aarch64-linux-android", "i686-linux-android", "x86_64-linux-android" ]
-assets = "assets/"
-# USER DEFINED
-label = "Rust JSX UI"
-version_code = 1
-version_name = "Bambi"
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "lib", "cdylib"]
 
 [profiles.dev]
 apple-universal = true

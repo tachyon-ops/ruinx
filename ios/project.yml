@@ -1,6 +1,20 @@
 name: app
+
 options:
   bundleIdPrefix: com.rust
+  createIntermediateGroups: true
+  usesTabs: false
+  indentWidth: 4
+  tabWidth: 4
+  deploymentTarget:
+    iOS: "9.0"
+
+settings:
+  CLANG_CXX_LANGUAGE_STANDARD: c++17
+  CLANG_CXX_LIBRARY: libc++
+  GCC_C_LANGUAGE_STANDARD: c11
+  CLANG_WARN_DOCUMENTATION_COMMENTS: false
+
 configs:
   Debug: debug
   Release: release
@@ -14,7 +28,8 @@ targets:
       workingDirectory: "."
   app:
     sources:
-      - path: Sources
+      - Sources
+      - LaunchScreen.storyboard
       - path: assets
         type: folder
         buildPhase: resources
@@ -34,7 +49,7 @@ targets:
           isEnabled: true
     settings:
       base:
-        OTHER_LDFLAGS: ["$(inherited)", "-lrust_jsx_app"]
+        OTHER_LDFLAGS: ["$(inherited)", "-lrust_jsx_ui"]
         ENABLE_BITCODE: NO
         CLANG_CXX_LANGUAGE_STANDARD: c++14
         CLANG_CXX_LIBRARY: libc++
@@ -46,13 +61,14 @@ targets:
           HEADER_SEARCH_PATHS: ["$(inherited)", "Sources/"]
           LIBRARY_SEARCH_PATHS: ["$(inherited)", "../target/universal/release"]
     dependencies:
-      - sdk: OpenGLES.framework
+      # - sdk: OpenGLES.framework
       - sdk: Metal.framework
-      - sdk: GLKit.framework
-      - sdk: CoreAudio.framework
-      - sdk: AudioToolbox.framework
+      # - sdk: GLKit.framework
+      # - sdk: CoreAudio.framework
+      # - sdk: AudioToolbox.framework
       - sdk: Security.framework
       - sdk: UIKit.framework
+      # - sdk: CoreFoundation.framework
       - target: cargo_ios
         embed: false
     info:
