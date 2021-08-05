@@ -16,6 +16,7 @@ image = "0.23"
 log = "0.4"
 wgpu = "0.9"
 # winit = "0.24"
+sentry = "0.23.0"
 winit = {git = "https://github.com/nmpribeiro/winit.git", branch = "fix/ios"}
 
 [target.'cfg(target_os = "android")'.dependencies]

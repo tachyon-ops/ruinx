@@ -171,7 +171,21 @@ impl State {
     }
 }
 
+fn sentry_init() {
+    let _guard = sentry::init((
+        "https://examplePublicKey@o0.ingest.sentry.io/0",
+        sentry::ClientOptions {
+            release: Some("my-project-name@2.3.12".into()),
+            // OR automatically:
+            // release: sentry::release_name!(),
+            ..Default::default()
+        },
+    ));
+}
+
 pub fn entry() {
+    sentry_init();
+
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
