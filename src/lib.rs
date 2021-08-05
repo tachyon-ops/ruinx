@@ -182,7 +182,7 @@ pub fn entry() {
 
     log::info!("    --- EVENT LOOP ---");
     event_loop.run(move |event, _, control_flow| {
-        // *control_flow = ControlFlow::Wait;
+        *control_flow = ControlFlow::Wait;
         match &mut state_ {
             Some(state) => match event {
                 Event::WindowEvent {

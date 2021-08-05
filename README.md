@@ -113,22 +113,42 @@ export NDK_HOME=$ANDROID_SDK_ROOT/ndk/$NDK_VERSION
 
 Once you have my environmental variables, a bash script `android.sh` was made for your convenience.
 
+Now, still you need to setup your `~/.cargo/config` to have your toolchains setup. Something like this:
+
+```yaml
+[build]
+rustc-wrapper = "/usr/local/bin/sccache"
+
+[target.aarch64-linux-android]
+linker = "/Users/<CHANGE_USER>/Library/Android/sdk/ndk/<SOME_NDK_VRSION>/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android29-clang++"
+
+[target.armv7-linux-androideabi]
+linker = "/Users/<CHANGE_USER>/Library/Android/sdk/ndk/<SOME_NDK_VRSION>/toolchains/llvm/prebuilt/darwin-x86_64/bin/armv7a-linux-androideabi29-clang++"
+
+[target.i686-linux-android]
+linker = "/Users/<CHANGE_USER>/Library/Android/sdk/ndk/<SOME_NDK_VRSION>/toolchains/llvm/prebuilt/darwin-x86_64/bin/i686-linux-android29-clang++"
+
+[target.x86_64-linux-android]
+linker = "/Users/<CHANGE_USER>/Library/Android/sdk/ndk/<SOME_NDK_VRSION>/toolchains/llvm/prebuilt/darwin-x86_64/bin/x86_64-linux-android29-clang++"
+```
+
+Be aware I am using ndk version 21.4.7075529 to target Android 29.
+
 For debug or build you can do `./android.sh -b` (-b or --build) or `./android.sh -r` (-r or --release).
 
 #### for a debug build
 
-`cargo quad-apk build`
+`./android.sh -d`
 
 #### for a release build
 
-`cargo quad-apk build --release`
+`./android.sh -r`
 
-An apk will be in `target/android-artifacts/debug/apk` or `target/android-artifacts/release/apk`.
+Head over to your android studio and run it. If you just want the apk, it will be in `target/android-artifacts/debug/apk` or `target/android-artifacts/release/apk`.
 
 ##### Log android
 
-`adb shell pidof -s io.nmpribeiro.rust_jsx_app`
-`adb shell pidof -s [PID]`
+Use android project to check logs.
 
 ## Resources
 
@@ -136,3 +156,7 @@ An apk will be in `target/android-artifacts/debug/apk` or `target/android-artifa
 
 Have a look at this cool exploration of rust scrtipting lang ecosystem as of 2021 [here](https://www.boringcactus.com/2020/09/16/survey-of-rust-embeddable-scripting-languages.html#duckscript).
 We went for Dyon
+
+Issues
+[ ] - Currently `winit` iOS has a bug where if you touch the app, it will crash. It is solved by this [commit](https://github.com/nmpribeiro/winit/commit/665e8baab87f4b6c44952e5e0bf81848107c33b1).
+[ ] - Latest version of `winit` (both master and `v0.24`) have a bug where iiin android we cannot aquire the surface. Issue [here](https://github.com/rust-windowing/winit/issues/1986).

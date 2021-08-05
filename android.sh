@@ -40,15 +40,6 @@ BUILD_MODE="release"
 
 for i in "$@"; do
 	case $i in
-	-i | --install)
-		# for a debug build
-		# Install and setup NDK
-		$NDK_HOME/build/tools/make_standalone_toolchain.py --api 29 --arch arm64 --install-dir ~/.NDK/arm64
-		$NDK_HOME/build/tools/make_standalone_toolchain.py --api 29 --arch arm --install-dir ~/.NDK/arm
-		$NDK_HOME/build/tools/make_standalone_toolchain.py --api 29 --arch x86 --install-dir ~/.NDK/x86
-		$NDK_HOME/build/tools/make_standalone_toolchain.py --api 29 --arch x86_64 --install-dir ~/.NDK/x86_64
-		exit
-		;;
 	-d | --debug)
 		# for a debug build
 		BUILD_MODE="debug"
@@ -63,10 +54,11 @@ for i in "$@"; do
 	-r |  --release)
 		# for release build
 		#build the libraries
-		cargo build --target aarch64-linux-android --$BUILD_MODE
-		cargo build --target armv7-linux-androideabi --$BUILD_MODE
-		cargo build --target i686-linux-android --$BUILD_MODE
-		cargo build --target x86_64-linux-android --$BUILD_MODE
+		# cargo build --target aarch64-linux-android --$BUILD_MODE
+		# cargo build --target armv7-linux-androideabi --$BUILD_MODE
+		# cargo build --target i686-linux-android --$BUILD_MODE
+		# cargo build --target x86_64-linux-android --$BUILD_MODE
+		cargo apk build --$BUILD_MODE
 		;;
 
 	-b |  --apk-build)
@@ -75,9 +67,15 @@ for i in "$@"; do
 		exit
 		;;
 
-	-r |  --apk-run)
-		# APK BUILD
+	-s |  --apk-start)
+		# APK RUN
 		RUST_LOG=trace RUST_BACKTRACE=full cargo apk run
+		exit
+		;;
+
+	-r |  --apk-release)
+		# APK BUILD RELEASE
+		cargo apk build --$BUILD_MODE
 		exit
 		;;
 
