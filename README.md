@@ -157,6 +157,8 @@ Use android project to check logs.
 Have a look at this cool exploration of rust scrtipting lang ecosystem as of 2021 [here](https://www.boringcactus.com/2020/09/16/survey-of-rust-embeddable-scripting-languages.html#duckscript).
 We went for Dyon
 
-Issues
+## Issues
+
 [ ] - Currently `winit` iOS has a bug where if you touch the app, it will crash. It is solved by this [commit](https://github.com/nmpribeiro/winit/commit/665e8baab87f4b6c44952e5e0bf81848107c33b1).
-[ ] - Latest version of `winit` (both master and `v0.24`) have a bug where iiin android we cannot aquire the surface. Issue [here](https://github.com/rust-windowing/winit/issues/1986).
+
+[ ] - Latest version of `winit` (both master and `v0.25`) only works with `ndk_glue` `v0.3.0`. Other combinations have a bug where in android were we cannot aquire the surface properly. Issue [here](https://github.com/rust-windowing/winit/issues/1986).
