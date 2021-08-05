@@ -9,7 +9,8 @@ version = "0.1.0"
 
 [dependencies]
 image = "0.23"
-winit = "0.24"
+# winit = "0.25"
+winit = { git="https://github.com/nmpribeiro/winit.git", branch="working_android_winit"}
 cgmath = "0.18"
 env_logger = "0.8"
 log = "0.4"
@@ -49,7 +50,7 @@ version = "4198400" # v1.1 = 0x00401000
 # Docs: https://lib.rs/crates/cargo-quad-apk
 
 [lib]
-crate-type = ["lib", "cdylib"]
+crate-type = ["staticlib", "lib", "cdylib"]
 
 [profiles.dev]
 apple-universal = true

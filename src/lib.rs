@@ -8,47 +8,6 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-// fn wait_for_native_window() {
-//     log::info!("Will now wait for native window");
-//     #[cfg(target_os = "android")]
-//     {
-//         log::info!("App started. Waiting for NativeScreen");
-//         loop {
-//             match ndk_glue::native_window().as_ref() {
-//                 Some(_) => {
-//                     log::info!("NativeScreen Found:{:?}", ndk_glue::native_window());
-//                     break;
-//                 }
-//                 None => (),
-//             }
-//         }
-//     }
-//     log::info!("Proceeding after native window");
-// }
-
-// fn block_until_has_size(window: &Window) -> PhysicalSize<u32> {
-//     let mut size = window.inner_size();
-
-//     let mut condition = true;
-//     let mut i = 0;
-//     while condition {
-//         std::thread::sleep(std::time::Duration::from_millis(250));
-//         // wait_for_native_window();
-//         size = window.inner_size();
-//         log::info!("Window size is {} x {}", size.width, size.height);
-
-//         if size.width != 0 {
-//             condition = false;
-//         }
-//         if i >= 20 {
-//             condition = false;
-//         }
-//         i = i + 1;
-//     }
-//     log::info!("Window size is {} x {}", size.width, size.height);
-//     size
-// }
-
 struct State {
     size: PhysicalSize<u32>,
     surface: wgpu::Surface,
@@ -69,19 +28,7 @@ impl State {
         log::info!("Size: {} x {}", size.width, size.height);
 
         log::info!("Instance");
-
-        // let instance;
-        // #[cfg(target_os = "android")]
-        // {
-        //     log::info!("------------- Selecting VULKAN -------------");
-        //     instance = wgpu::Instance::new(wgpu::Backends::VULKAN);
-        // }
-
-        // #[cfg(not(target_os = "android"))]
-        // {
-        //     instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
-        // }
-        let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
+        let instance = wgpu::Instance::new(wgpu::BackendBit::all());
 
         log::info!("Surface");
         let surface = unsafe { instance.create_surface(window) };
@@ -128,6 +75,10 @@ impl State {
         });
 
         log::info!("Swapchain format");
+
+        // OpenGL BUG (simulator): rust_jsx_ui: Swapchain format
+        // I/RustStdoutStderr: thread '<unnamed>' panicked at 'called `Option::unwrap()` on a `None` value', /Users/nmpribeiro/.cargo/registry/src/github.com-1ecc6299db9ec823/wgpu-core-0.9.2/src/hub.rs:878:29
+        //     stack backtrace:
         let swapchain_format = adapter.get_swap_chain_preferred_format(&surface).unwrap();
 
         log::info!("Render pipeline");
@@ -232,7 +183,6 @@ pub fn entry() {
     log::info!("    --- EVENT LOOP ---");
     event_loop.run(move |event, _, control_flow| {
         // *control_flow = ControlFlow::Wait;
-
         match &mut state_ {
             Some(state) => match event {
                 Event::WindowEvent {
