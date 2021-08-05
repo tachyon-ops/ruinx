@@ -36,7 +36,6 @@ echo $NDK_HOME
 # $ANDROID_SDK_HOME/tools/bin/sdkmanager "build-tools;30.0.3"
 # $ANDROID_SDK_HOME/tools/bin/sdkmanager --update
 
-
 BUILD_MODE="release"
 
 for i in "$@"; do
@@ -47,15 +46,19 @@ for i in "$@"; do
 		$NDK_HOME/build/tools/make_standalone_toolchain.py --api 29 --arch arm64 --install-dir ~/.NDK/arm64
 		$NDK_HOME/build/tools/make_standalone_toolchain.py --api 29 --arch arm --install-dir ~/.NDK/arm
 		$NDK_HOME/build/tools/make_standalone_toolchain.py --api 29 --arch x86 --install-dir ~/.NDK/x86
+		$NDK_HOME/build/tools/make_standalone_toolchain.py --api 29 --arch x86_64 --install-dir ~/.NDK/x86_64
 		exit
 		;;
 	-d | --debug)
 		# for a debug build
 		BUILD_MODE="debug"
 		#build the libraries
-		RUST_LOG=trace RUST_BACKTRACE=full cargo build --target aarch64-linux-android
-		RUST_LOG=trace RUST_BACKTRACE=full cargo build --target armv7-linux-androideabi
-		RUST_LOG=trace RUST_BACKTRACE=full cargo build --target i686-linux-android
+		# RUST_LOG=trace RUST_BACKTRACE=full cargo build --target aarch64-linux-android
+		# RUST_LOG=trace RUST_BACKTRACE=full cargo build --target armv7-linux-androideabi
+		# RUST_LOG=trace RUST_BACKTRACE=full cargo build --target i686-linux-android
+		# RUST_LOG=trace RUST_BACKTRACE=full cargo build --target x86_64-linux-android
+		# We build using cargo apk as we need the libc++ as well
+		RUST_LOG=trace RUST_BACKTRACE=full cargo apk build
 		;;
 	-r |  --release)
 		# for release build
@@ -63,9 +66,22 @@ for i in "$@"; do
 		cargo build --target aarch64-linux-android --$BUILD_MODE
 		cargo build --target armv7-linux-androideabi --$BUILD_MODE
 		cargo build --target i686-linux-android --$BUILD_MODE
+		cargo build --target x86_64-linux-android --$BUILD_MODE
 		;;
-	*)
 
+	-b |  --apk-build)
+		# APK BUILD
+		RUST_LOG=trace RUST_BACKTRACE=full cargo apk build
+		exit
+		;;
+
+	-r |  --apk-run)
+		# APK BUILD
+		RUST_LOG=trace RUST_BACKTRACE=full cargo apk run
+		exit
+		;;
+
+	*)
 		# unknown option
 		exit
 		;;
@@ -74,7 +90,7 @@ done
 
 #NOTE: Dont't forget to modify these vars to your setup
 LIBS_DIR=./android/app/src/main/jniLibs
-LIB_NAME=librust_jsx_app.so
+LIB_NAME=rust_jsx_app
 
 #prepare folders...
 rm -rf $LIBS_DIR
@@ -82,11 +98,13 @@ mkdir $LIBS_DIR
 mkdir $LIBS_DIR/arm64-v8a
 mkdir $LIBS_DIR/armeabi-v7a
 mkdir $LIBS_DIR/x86
+mkdir $LIBS_DIR/x86_64
 
 echo
 #..and copy the rust library into the android studio project, ready for beeing included into the APK
-cp target/aarch64-linux-android/$BUILD_MODE/$LIB_NAME $LIBS_DIR/arm64-v8a/$LIB_NAME
-cp target/armv7-linux-androideabi/$BUILD_MODE/$LIB_NAME $LIBS_DIR/armeabi-v7a/$LIB_NAME
-cp target/i686-linux-android/$BUILD_MODE/$LIB_NAME $LIBS_DIR/x86/$LIB_NAME
+cp -rf target/$BUILD_MODE/apk/lib/arm64-v8a $LIBS_DIR
+cp -rf target/$BUILD_MODE/apk/lib/armeabi-v7a $LIBS_DIR
+cp -rf target/$BUILD_MODE/apk/lib/x86 $LIBS_DIR
+cp -rf target/$BUILD_MODE/apk/lib/x86_64 $LIBS_DIR
 
-ln -s ./assets ./android/TestApp/app/src/main/res/assets
+ln -s ./assets ./android/app/src/main/res/assets
