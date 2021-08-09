@@ -157,6 +157,15 @@ Use android project to check logs.
 Have a look at this cool exploration of rust scrtipting lang ecosystem as of 2021 [here](https://www.boringcactus.com/2020/09/16/survey-of-rust-embeddable-scripting-languages.html#duckscript).
 We went for Dyon
 
+### WebGPU
+
+- A bunch of cool resources about WebGPU in rust: [Everything I know](https://wiki.nikitavoloboev.xyz/computer-graphics/webgpu)
+
+### WebGPU 2D experiments
+
+- [Nannou](https://github.com/nannou-org/nannou)
+- [gfx-rs/wgpu 2D and much more](https://github.com/gfx-rs/wgpu/wiki/Users)
+
 ## Issues
 
 [ ] - Currently `winit` iOS has a bug where if you touch the app, it will crash. It is solved by this [commit](https://github.com/nmpribeiro/winit/commit/665e8baab87f4b6c44952e5e0bf81848107c33b1).
