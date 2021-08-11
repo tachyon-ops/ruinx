@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
+use crate::RenderError;
+
 pub struct State {
     pub size: PhysicalSize<u32>,
     surface: wgpu::Surface,
@@ -132,7 +134,7 @@ impl State {
         false
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
+    pub fn render(&mut self) -> Result<(), RenderError> {
         let frame = self
             .swap_chain
             .get_current_frame()

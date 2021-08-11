@@ -6,10 +6,12 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-futures = "0.3"
+app-events = {path = "../app-events"}
 dyon = "0.46.0"
+futures = "0.3"
 graphics = {path = "../graphics"}
 rsx-parser = {git = "https://github.com/nmpribeiro/rsx-parser.git"}
 rsx_loader = {path = "../rsx_loader"}
 utils = {path = "../utils"}
 uuid = {version = "0.8", features = ["v4"]}
+winit = "0.25.0"

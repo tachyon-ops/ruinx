@@ -1,40 +1,10 @@
 # #!/usr/bin/env bash
 
-# # export ANDROID_SDK_ROOT=/Users/nmpribeiro/Library/Android/sdk
-# # export NDK_HOME=/Users/nmpribeiro/Library/Android/sdk/ndk/22.1.7171670
-
-# # cd android
-# # wget -q https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
-# # unzip -q sdk-tools-linux-4333796.zip
-# # rm sdk-tools-linux-4333796.zip
-# # tools/bin/sdkmanager "platform-tools"
-# # tools/bin/sdkmanager "platforms;android-29"
-# # tools/bin/sdkmanager "build-tools;29.0.0"
-# # tools/bin/sdkmanager --update
-
-# # cd ..
-
-# # export ANDROID_SDK_ROOT=/Users/$USER/Library/Android/sdk
-# # export NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
-# # export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
-
-export ANDROID_SDK_ROOT=/Users/$USER/Library/Android/sdk
-# export ANDROID_SDK_HOME=/Users/$USER/Library/Android/sdk
-NDK_VERSION=21.4.7075529
-export NDK_HOME=$ANDROID_SDK_ROOT/ndk/$NDK_VERSION
+export ANDROID_SDK_ROOT=/Users/$USER/android
+export NDK_HOME=$ANDROID_SDK_ROOT/android/android-ndk-r20/
+echo "Using the following Android and NDK:"
 echo $ANDROID_SDK_ROOT
-# ls $ANDROID_SDK_ROOT
 echo $NDK_HOME
-# ls $NDK_HOME
-
-# # export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions --add-modules java.se.ee'
-# # export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions --add-modules java.xml.bind'
-
-# # sudo $ANDROID_SDK_HOME/tools/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.0"
-# $ANDROID_SDK_HOME/tools/bin/sdkmanager "platform-tools"
-# $ANDROID_SDK_HOME/tools/bin/sdkmanager "platforms;android-30"
-# $ANDROID_SDK_HOME/tools/bin/sdkmanager "build-tools;30.0.3"
-# $ANDROID_SDK_HOME/tools/bin/sdkmanager --update
 
 BUILD_MODE="release"
 
@@ -44,20 +14,12 @@ for i in "$@"; do
 		# for a debug build
 		BUILD_MODE="debug"
 		#build the libraries
-		# RUST_LOG=trace RUST_BACKTRACE=full cargo build --target aarch64-linux-android
-		# RUST_LOG=trace RUST_BACKTRACE=full cargo build --target armv7-linux-androideabi
-		# RUST_LOG=trace RUST_BACKTRACE=full cargo build --target i686-linux-android
-		# RUST_LOG=trace RUST_BACKTRACE=full cargo build --target x86_64-linux-android
 		# We build using cargo apk as we need the libc++ as well
 		RUST_LOG=trace RUST_BACKTRACE=full cargo apk build
 		;;
 	-r |  --release)
 		# for release build
 		#build the libraries
-		# cargo build --target aarch64-linux-android --$BUILD_MODE
-		# cargo build --target armv7-linux-androideabi --$BUILD_MODE
-		# cargo build --target i686-linux-android --$BUILD_MODE
-		# cargo build --target x86_64-linux-android --$BUILD_MODE
 		cargo apk build --$BUILD_MODE
 		;;
 
@@ -87,7 +49,8 @@ for i in "$@"; do
 done
 
 #NOTE: Dont't forget to modify these vars to your setup
-LIBS_DIR=./android/app/src/main/jniLibs
+PROJ_MAIN=./android/app/src/main
+LIBS_DIR=$PROJ_MAIN/jniLibs
 LIB_NAME=rust_jsx_app
 
 #prepare folders...
@@ -105,4 +68,10 @@ cp -rf target/$BUILD_MODE/apk/lib/armeabi-v7a $LIBS_DIR
 cp -rf target/$BUILD_MODE/apk/lib/x86 $LIBS_DIR
 cp -rf target/$BUILD_MODE/apk/lib/x86_64 $LIBS_DIR
 
-ln -s ./assets ./android/app/src/main/res/assets
+# Check whether the root assets folder of our main Android app has a symlink to our shared assets
+pushd $PROJ_MAIN
+if [ ! -d "assets" ]; then
+	echo "Linking assets to ../../../../assets"
+	ln -s ../../../../assets .
+fi
+popd

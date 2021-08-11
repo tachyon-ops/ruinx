@@ -5,7 +5,7 @@ mod state;
 
 pub use mode::AppMode;
 pub use run::event_loop;
-pub use stage::Stage;
+pub use stage::{RenderError, Stage};
 pub use state::State;
 
 #[cfg(test)]

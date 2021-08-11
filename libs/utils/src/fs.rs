@@ -34,26 +34,23 @@ pub fn load_file<F: Fn(Response) + 'static>(path: &str, on_loaded: F) {
 }
 
 #[cfg(target_os = "android")]
-fn load_file_android<F: Fn(Response)>(path: &str, on_loaded: F) {
+pub fn load_file_android<F: Fn(Response)>(name: &str, on_loaded: F) {
     fn load_file_sync(path: &str) -> Response {
-        let filename = std::ffi::CString::new(path).unwrap();
+        use std::ffi::CString;
+        use std::io::Read;
+        let activity = ndk_glue::native_activity();
+        let asset_manager = activity.asset_manager();
 
-        let mut data: sapp_android::android_asset = unsafe { std::mem::zeroed() };
+        let mut asset = asset_manager
+            .open(&CString::new(path).unwrap())
+            .ok_or(Error::AndroidAssetLoadingError)?;
 
-        unsafe { sapp_android::sapp_load_asset(filename.as_ptr(), &mut data as _) };
-
-        if data.content.is_null() == false {
-            let slice =
-                unsafe { std::slice::from_raw_parts(data.content, data.content_length as _) };
-            let response = slice.iter().map(|c| *c as _).collect::<Vec<_>>();
-            Ok(response)
-        } else {
-            Err(Error::AndroidAssetLoadingError)
-        }
+        let mut data: Vec<u8> = vec![];
+        asset.read_to_end(&mut data);
+        Ok(data)
     }
 
-    let response = load_file_sync(path);
-
+    let response = load_file_sync(name);
     on_loaded(response);
 }
 

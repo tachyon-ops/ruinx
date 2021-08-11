@@ -1,11 +1,6 @@
 use rsx_parser::types::RSXElement;
 
-use crate::engine::dom::UiDom;
-
-use super::super::engine::event::Event;
-use super::super::engine::EventHandler;
-
-use crate::engine::dom::view::View;
+use crate::engine::{dom::view::View, dom::UiDom, EventHandler};
 
 pub struct UiExample {
     ast: Option<RSXElement>,
@@ -21,8 +16,8 @@ impl EventHandler for UiExample {
     // fn handle_event(&mut self, current_widget_id: u32, event: Event, cache: &mut WidgetCache) {
     //     eprintln!("Event received: {:?}", event);
     // }
-    fn handle_event(&mut self, event: Event) {
-        eprintln!("Event received: {:?}", event);
+    fn handle_event(&mut self, event: app_events::event::Event) {
+        // eprintln!("Event received: {:?}", event);
     }
 
     // fn build_layout(&mut self, cache: &mut WidgetCache) {

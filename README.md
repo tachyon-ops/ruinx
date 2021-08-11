@@ -46,7 +46,7 @@ This step highly depends on the OS, for ubuntu:
 
 `sudo apt-get install openjdk-8-jdk`
 
-#### Rust android
+##### Rust android
 
 Assuming rustup's rust installation:
 
@@ -59,7 +59,7 @@ rustup target add x86_64-linux-android
 
 ##### Android SDK
 
-###### create a folder for all the android pre-requisites stuff
+Create a folder for all the android pre-requisites stuff
 
 ```bash
 mkdir /this/may/be/any/path/android
@@ -74,11 +74,9 @@ tools/bin/sdkmanager "build-tools;29.0.0"
 tools/bin/sdkmanager --update
 ```
 
-Note: the above will not work with `android.sh` utility as it was fine-tuned to use android 30 with build-tools 30.0.3.
-
 ##### Android NDK
 
-- go to the same dir created for android-sdk
+###### go to the same dir created for android-sdk
 
 ```bash
 cd /path/from/previous/step/android
@@ -86,13 +84,9 @@ cd /path/from/previous/step/android
 wget -q http://dl.google.com/android/repository/android-ndk-r20-linux-x86_64.zip
 unzip -q android-ndk-r20-linux-x86_64.zip
 rm android-ndk-r20-linux-x86_64.zip
+
+For debug or build you can do `./android.sh -b` (-b or --build) or `./android.sh -r` (-r or --release).
 ```
-
-##### Cargo APK
-
-`cargo-quad-apk` is a cargo extension, allowing
-
-`cargo install cargo-quad-apk`
 
 ###### Building an APK, a manual way
 
@@ -101,40 +95,16 @@ export ANDROID_HOME=/path/from/previous/step/android
 export NDK_HOME=/path/from/previous/step/android/android-ndk-r20
 ```
 
-Here are my personal environment variables (Android SDK was installed from Android Studio, google how to download precise NDKs and SDKs for android studio):
+Here are my personal environment variables:
 
 ```bash
-export ANDROID_SDK_HOME=/Users/$USER/Library/Android/sdk
-export NDK_VERSION=21.4.7075529
-export NDK_HOME=$ANDROID_SDK_ROOT/ndk/$NDK_VERSION
+export ANDROID_SDK_ROOT=/Users/$USER/android
+export NDK_HOME=$ANDROID_SDK_ROOT/android/android-ndk-r20/
 ```
 
 #### android.sh
 
 Once you have my environmental variables, a bash script `android.sh` was made for your convenience.
-
-Now, still you need to setup your `~/.cargo/config` to have your toolchains setup. Something like this:
-
-```yaml
-[build]
-rustc-wrapper = "/usr/local/bin/sccache"
-
-[target.aarch64-linux-android]
-linker = "/Users/<CHANGE_USER>/Library/Android/sdk/ndk/<SOME_NDK_VRSION>/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android29-clang++"
-
-[target.armv7-linux-androideabi]
-linker = "/Users/<CHANGE_USER>/Library/Android/sdk/ndk/<SOME_NDK_VRSION>/toolchains/llvm/prebuilt/darwin-x86_64/bin/armv7a-linux-androideabi29-clang++"
-
-[target.i686-linux-android]
-linker = "/Users/<CHANGE_USER>/Library/Android/sdk/ndk/<SOME_NDK_VRSION>/toolchains/llvm/prebuilt/darwin-x86_64/bin/i686-linux-android29-clang++"
-
-[target.x86_64-linux-android]
-linker = "/Users/<CHANGE_USER>/Library/Android/sdk/ndk/<SOME_NDK_VRSION>/toolchains/llvm/prebuilt/darwin-x86_64/bin/x86_64-linux-android29-clang++"
-```
-
-Be aware I am using ndk version 21.4.7075529 to target Android 29.
-
-For debug or build you can do `./android.sh -b` (-b or --build) or `./android.sh -r` (-r or --release).
 
 #### for a debug build
 

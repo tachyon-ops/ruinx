@@ -9,10 +9,13 @@ version = "0.1.0"
 [dependencies]
 env_logger = "0.9"
 log = "0.4"
+
+# sentry: needs it vendored for android
+openssl = {version = "0.10.35", features = ["vendored"]}
 sentry = "0.23.0"
 
 # our libs
-# graphics = {path = "./libs/graphics"}
+graphics = {path = "./libs/graphics"}
 rsx_ui = {path = "./libs/rsx_ui"}
 utils = {path = "./libs/utils"}
 

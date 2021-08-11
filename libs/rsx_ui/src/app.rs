@@ -1,6 +1,6 @@
 use futures::executor::block_on;
 
-use crate::{engine, rsx_lang, scripting_lang, ui::example::UiExample};
+use crate::{engine, rsx_lang, scripting_lang, ui::app_ui::UiExample};
 
 pub struct App {}
 

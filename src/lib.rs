@@ -1,10 +1,9 @@
 pub fn entry() {
+    #[cfg(not(target_os = "android"))]
     let _guard = sentry::init((
-        "https://examplePublicKey@o0.ingest.sentry.io/0",
+        "https://f885616c98c94558933f3d1ddc4d9cee@o925020.ingest.sentry.io/5873587",
         sentry::ClientOptions {
-            release: Some("my-project-name@2.3.12".into()),
-            // OR automatically:
-            // release: sentry::release_name!(),
+            release: sentry::release_name!(),
             ..Default::default()
         },
     ));

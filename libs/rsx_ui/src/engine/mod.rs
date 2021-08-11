@@ -1,34 +1,16 @@
 pub mod dom;
-pub mod event;
+mod event_handler;
 // pub mod widgets;
-
-// Pushrod
-use event::Event;
 
 // Our own
 use dom::UiDom;
+pub use event_handler::EventHandler;
 use graphics::Stage;
 use uuid::Uuid;
 
 // SDL
 // use sdl2::video::Window;
 // use sdl2::Sdl;
-
-pub trait EventHandler {
-    /// This is the event handler that should be implemented when the `Event` handler is used.
-    /// It provides the currently active widget ID and the event that was generated.
-    /// Any events that could not be translated by `Pushrod` are either swallowed, or handled
-    /// directly by the `run` method.  The cache is also provide as a way to get access to any
-    /// `Widget`s in the list that need to be modified as the result of acting upon an `Event`.
-    // fn handle_event(&mut self, current_view_id: u32, event: Event, cache: &mut WidgetCache);
-    fn handle_event(&mut self, event: Event);
-
-    /// This callback is used when the screen needs to be built for the first time.  It is called
-    /// by the `Engine`'s `run` method before the event loop starts.  The `cache` is sent such that
-    /// `Widget`s can be added to the display list by using the `WidgetCache`'s functions.
-    // fn build_layout(&mut self, cache: &mut WidgetCache);
-    fn build_layout(&mut self, dom: &mut UiDom);
-}
 
 pub struct Engine {
     current_view_uuid: Uuid,
@@ -44,15 +26,25 @@ impl Stage for Engine {
             _ => graphics::AppMode::APP,
         }
     }
+    fn update(&mut self) {
+        // println!("Engine trait Stage will update");
+    }
+    fn render(&mut self) -> std::result::Result<(), graphics::RenderError> {
+        // println!("Engine trait State will draw");
+        Ok(())
+    }
+
     fn setup(&mut self) {
-        println!("Engine trait Stage will setup");
         self.ui.build_layout(&mut self.dom);
     }
-    fn update(&mut self) {
-        println!("Engine trait Stage will update");
+
+    fn event(&mut self, event: &winit::event::Event<()>) {
+        self.ui
+            .handle_event(app_events::event::Event::Wintit(event));
     }
-    fn render(&mut self) {
-        println!("Engine trait State will draw");
+
+    fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
+        // println!("Resize event triggered {}x{}", size.width, size.height);
     }
 }
 

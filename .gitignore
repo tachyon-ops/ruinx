@@ -2,3 +2,8 @@
 /ios/app.xcodeproj
 /ios/assets
 .vscode/
+/libs/utils/target
+/libs/rsx_ui/target
+/libs/rsx_loader/target
+/libs/graphics/target
+android/app/src/main/assets

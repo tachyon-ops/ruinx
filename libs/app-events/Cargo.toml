@@ -1,10 +1,9 @@
 [package]
 edition = "2018"
-name = "utils"
+name = "app-events"
 version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[target.'cfg(target_os = "android")'.dependencies]
-android-ndk = "0.0.6"
-ndk-glue = {version = "0.3.0", features = ["logger"]}
+[dependencies]
+winit = "0.25.0"

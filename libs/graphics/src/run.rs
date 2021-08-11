@@ -1,20 +1,23 @@
 use futures::executor::block_on;
 
 use winit::{
+    dpi::PhysicalSize,
     event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
 
-use crate::{AppMode, Stage, State};
+use crate::{stage::RenderError, AppMode, Stage, State};
 
 struct App {
+    size: PhysicalSize<u32>,
     stage: Box<dyn Stage>,
+    state: Option<State>,
 }
 
 impl App {
-    fn new(stage: Box<dyn Stage>) -> App {
-        App { stage }
+    fn new(stage: Box<dyn Stage>, state: Option<State>, size: PhysicalSize<u32>) -> App {
+        App { stage, state, size }
     }
     fn get_mode(&mut self) -> AppMode {
         self.stage.get_mode()
@@ -23,39 +26,82 @@ impl App {
         self.stage.setup();
     }
     fn update(&mut self) {
+        match &mut self.state {
+            Some(s) => s.update(),
+            _ => {}
+        }
         self.stage.update();
     }
-    fn render(&mut self) {
-        self.stage.render();
+    fn event(&mut self, event: &Event<()>) {
+        self.stage.event(event);
+    }
+    fn resize(&mut self, new_size: PhysicalSize<u32>) {
+        self.size = new_size;
+        match &mut self.state {
+            Some(s) => s.resize(new_size),
+            _ => {}
+        }
+        self.stage.resize(new_size);
+    }
+    fn set_state(&mut self, state: Option<State>) {
+        self.state = state;
+    }
+    fn has_state(&mut self) -> bool {
+        self.state.is_some()
+    }
+    fn input(&mut self, event: &WindowEvent) -> bool {
+        match &mut self.state {
+            Some(s) => s.input(event),
+            _ => false,
+        }
+    }
+    fn render(&mut self) -> Result<(), RenderError> {
+        match &mut self.state {
+            Some(s) => {
+                self.stage.render()?;
+                s.render()
+            }
+            _ => Err(RenderError::MissplacedCall),
+        }
     }
 }
+
+const APP_NAME: &'static str = env!("CARGO_PKG_NAME");
 
 pub fn event_loop(stage: Box<dyn Stage>) {
     log::info!("Inside RUN!");
     let event_loop = EventLoop::new();
-    let window = WindowBuilder::new().build(&event_loop).unwrap();
+    let window = WindowBuilder::new()
+        .with_title(APP_NAME)
+        .build(&event_loop)
+        .unwrap();
 
     #[cfg(not(target_os = "android"))]
     let mut state_ = Some(block_on(State::new(&window)));
     #[cfg(target_os = "android")]
     let mut state_: std::option::Option<State> = None;
 
-    let mut app = App::new(stage);
+    let mut app = App::new(stage, state_, window.inner_size());
 
     app.setup();
 
     log::info!("    --- EVENT LOOP ---");
+
     event_loop.run(move |event, _, control_flow| {
         if app.get_mode() == AppMode::APP {
             *control_flow = ControlFlow::Wait;
         }
-        match &mut state_ {
-            Some(state) => match event {
+        if app.get_mode() == AppMode::GAME {
+            *control_flow = ControlFlow::Poll;
+        }
+        if app.has_state() {
+            app.event(&event);
+            match event {
                 Event::WindowEvent {
                     ref event,
                     window_id,
                 } if window_id == window.id() => {
-                    if !state.input(event) {
+                    if !app.input(event) {
                         match event {
                             WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                             WindowEvent::KeyboardInput { input, .. } => match input {
@@ -66,41 +112,42 @@ pub fn event_loop(stage: Box<dyn Stage>) {
                                 } => *control_flow = ControlFlow::Exit,
                                 _ => {}
                             },
-                            WindowEvent::Resized(physical_size) => {
-                                state.resize(*physical_size);
-                            }
+                            WindowEvent::Resized(physical_size) => app.resize(*physical_size),
                             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                                state.resize(**new_inner_size);
+                                app.resize(**new_inner_size)
                             }
                             _ => {}
                         }
                     }
                 }
                 Event::MainEventsCleared => {
-                    state.update();
                     app.update();
-                    match state.render() {
+                    match app.render() {
                         Ok(_) => {}
-                        Err(wgpu::SwapChainError::Lost) => state.resize(state.size),
-                        Err(wgpu::SwapChainError::OutOfMemory) => *control_flow = ControlFlow::Exit,
+                        Err(RenderError::SwapChainError(wgpu::SwapChainError::Lost)) => {
+                            app.resize(app.size)
+                        }
+                        Err(RenderError::SwapChainError(wgpu::SwapChainError::OutOfMemory)) => {
+                            *control_flow = ControlFlow::Exit
+                        }
                         Err(e) => eprintln!("{:?}", e),
                     }
-                    app.render();
                 }
                 Event::Suspended => {
                     log::info!("App suspended");
-                    state_ = None;
+                    app.set_state(None);
                 }
                 _ => {}
-            },
-            None => match event {
+            };
+        } else {
+            match event {
                 Event::Resumed => {
                     log::info!("App resumed");
                     std::thread::sleep(std::time::Duration::from_millis(250));
-                    state_ = Some(block_on(State::new(&window)));
+                    app.set_state(Some(block_on(State::new(&window))));
                 }
                 _ => {}
-            },
+            }
         }
     });
 }
