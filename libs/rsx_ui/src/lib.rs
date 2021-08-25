@@ -1,5 +1,4 @@
 pub mod app;
-pub mod app_mode;
 pub mod dom;
 pub mod engine;
 pub mod ui;

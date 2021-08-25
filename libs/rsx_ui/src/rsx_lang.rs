@@ -7,7 +7,7 @@ impl RSXLang {
         let file = format!("rsx/{}.rsx", entry_point);
         println!("RSX file: {}", file);
 
-        let source_res = macroquad::file::load_string(&file).await;
+        let source_res = utils::Utils::load_string(&file).await;
 
         let mut ast = None;
         match source_res {

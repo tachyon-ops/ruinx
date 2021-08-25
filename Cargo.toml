@@ -7,28 +7,22 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0"
-bytemuck = {version = "1.4", features = ["derive"]}
-cgmath = "0.18"
 env_logger = "0.9"
-futures = "0.3"
-image = "0.23"
 log = "0.4"
-wgpu = "0.9"
-# winit = "0.24"
+
+# sentry: needs it vendored for android
+openssl = {version = "0.10.35", features = ["vendored"]}
 sentry = "0.23.0"
-winit = {git = "https://github.com/nmpribeiro/winit.git", branch = "fix/ios"}
+
+# our libs
+graphics = {path = "./libs/graphics"}
+rsx_ui = {path = "./libs/rsx_ui"}
+utils = {path = "./libs/utils"}
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.10.1"
 ndk-glue = {version = "0.3.0", features = ["logger"]}
 ndk-sys = "0.2.1"
-
-[build-dependencies]
-anyhow = "1.0"
-fs_extra = "1.1"
-glob = "0.3"
-shaderc = "0.7"
 
 [package.metadata.android]
 apk_label = "learn-wgpu"

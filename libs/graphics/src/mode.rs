@@ -1,5 +1,5 @@
 pub enum AppMode {
-    EDITOR,
+    APP,
     GAME,
 }
 
