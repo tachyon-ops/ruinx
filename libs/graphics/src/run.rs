@@ -4,7 +4,7 @@ use winit::{
     dpi::PhysicalSize,
     event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
+    window::{Window, WindowBuilder},
 };
 
 use crate::{stage::RenderError, AppMode, Stage, State};
@@ -55,11 +55,11 @@ impl App {
             _ => false,
         }
     }
-    fn render(&mut self) -> Result<(), RenderError> {
+    fn render(&mut self, scale_factor: f64) -> Result<(), RenderError> {
         match &mut self.state {
             Some(s) => {
                 self.stage.render()?;
-                s.render()
+                s.render(scale_factor, self.stage.render()?)
             }
             _ => Err(RenderError::MissplacedCall),
         }
@@ -77,9 +77,9 @@ pub fn event_loop(stage: Box<dyn Stage>) {
         .unwrap();
 
     #[cfg(not(target_os = "android"))]
-    let mut state_ = Some(block_on(State::new(&window)));
+    let state_ = Some(block_on(State::new(&window)));
     #[cfg(target_os = "android")]
-    let mut state_: std::option::Option<State> = None;
+    let state_: std::option::Option<State> = None;
 
     let mut app = App::new(stage, state_, window.inner_size());
 
@@ -122,7 +122,7 @@ pub fn event_loop(stage: Box<dyn Stage>) {
                 }
                 Event::MainEventsCleared => {
                     app.update();
-                    match app.render() {
+                    match app.render(window.scale_factor()) {
                         Ok(_) => {}
                         Err(RenderError::SwapChainError(wgpu::SwapChainError::Lost)) => {
                             app.resize(app.size)
