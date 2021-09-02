@@ -202,7 +202,7 @@ impl graphics::GuiTrait for DemoGui {
 
             // We'll demonstrate the `Text` primitive widget by using it to draw a title and an
             // introduction to the example.
-            const TITLE: &'static str = "All Widgets";
+            const TITLE: &'static str = "RuinX";
             const TITLE_SIZE: conrod_core::FontSize = 42;
             widget::Text::new(TITLE)
                 .font_size(TITLE_SIZE)
@@ -210,7 +210,7 @@ impl graphics::GuiTrait for DemoGui {
                 .set(ids.title, ui);
 
             const INTRODUCTION: &'static str =
-                    "This example aims to demonstrate all widgets that are provided by conrod.\
+                "This example aims to demonstrate all widgets that are provided by RuinX through conrod.\
                 \n\nThe widget that you are currently looking at is the Text widget. The Text widget \
                 is one of several special \"primitive\" widget types which are used to construct \
                 all other widget types. These types are \"special\" in the sense that conrod knows \
