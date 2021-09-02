@@ -8,8 +8,7 @@ pub use event_handler::EventHandler;
 use graphics::Engine;
 use uuid::Uuid;
 
-use conrod_core::{widget_ids, Colorable, Labelable, Sizeable};
-use std::iter::once;
+use conrod_core::widget_ids;
 use wgpu::{Device, Queue};
 
 pub struct UiEngine {
@@ -182,25 +181,15 @@ impl graphics::GuiTrait for DemoGui {
     fn gui(&mut self, ui: &mut conrod_core::UiCell) {
         let ids = Ids::new(ui.widget_id_generator());
 
-        use conrod_core::{
-            widget,
-            // Colorable,
-            // Labelable,
-            Positionable,
-            // Sizeable,
-            Widget,
-        };
-        // use std::iter::once;
+        use conrod_core::{widget, Colorable, Labelable, Positionable, Sizeable, Widget};
+        use std::iter::once;
 
         const MARGIN: conrod_core::Scalar = 30.0;
         const SHAPE_GAP: conrod_core::Scalar = 50.0;
-        const TITLE_SIZE: conrod_core::FontSize = 42;
-        const SUBTITLE_SIZE: conrod_core::FontSize = 32;
 
         // `Canvas` is a widget that provides some basic functionality for laying out children widgets.
         // By default, its size is the size of the window. We'll use this as a background for the
         // following widgets, as well as a scrollable container for the children widgets.
-        const TITLE: &'static str = "All Widgets";
         widget::Canvas::new()
             .pad(MARGIN)
             .scroll_kids_vertically()
@@ -212,6 +201,8 @@ impl graphics::GuiTrait for DemoGui {
 
         // We'll demonstrate the `Text` primitive widget by using it to draw a title and an
         // introduction to the example.
+        const TITLE: &'static str = "All Widgets";
+        const TITLE_SIZE: conrod_core::FontSize = 42;
         widget::Text::new(TITLE)
             .font_size(TITLE_SIZE)
             .mid_top_of(ids.canvas)
@@ -219,10 +210,10 @@ impl graphics::GuiTrait for DemoGui {
 
         const INTRODUCTION: &'static str =
             "This example aims to demonstrate all widgets that are provided by conrod.\
-     \n\nThe widget that you are currently looking at is the Text widget. The Text widget \
-     is one of several special \"primitive\" widget types which are used to construct \
-     all other widget types. These types are \"special\" in the sense that conrod knows \
-     how to render them via `conrod_core::render::Primitive`s.\
+        \n\nThe widget that you are currently looking at is the Text widget. The Text widget \
+        is one of several special \"primitive\" widget types which are used to construct \
+        all other widget types. These types are \"special\" in the sense that conrod knows \
+        how to render them via `conrod_core::render::Primitive`s.\
      \n\nScroll down to see more widgets!";
         widget::Text::new(INTRODUCTION)
             .padded_w_of(ids.canvas, MARGIN)
@@ -236,6 +227,7 @@ impl graphics::GuiTrait for DemoGui {
         ///// Lines and Shapes /////
         ////////////////////////////
 
+        const SUBTITLE_SIZE: conrod_core::FontSize = 32;
         widget::Text::new("Lines and Shapes")
             .down(70.0)
             .align_middle_x_of(ids.canvas)

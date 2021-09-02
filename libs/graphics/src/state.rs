@@ -131,6 +131,7 @@ impl State {
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
         log::info!("Resizing: {} x {}", size.width, size.height);
         // Recreate the swap chain with the new size
+        self.size = size;
         self.sc_desc.width = size.width;
         self.sc_desc.height = size.height;
         self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
@@ -158,14 +159,12 @@ impl State {
 
     pub fn ui_handle_event(&mut self, event: conrod_core::event::Input) {
         if let Some(ui) = &mut self.ui {
-            eprint!("State::ui_handle_event\n");
             ui.handle_event(event);
         }
     }
 
     pub fn ui_has_changed(&mut self) -> bool {
         if let Some(ui) = &mut self.ui {
-            eprint!("State::ui_has_changed\n");
             return ui.has_changed();
         }
         false

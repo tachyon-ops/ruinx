@@ -57,8 +57,7 @@ impl App {
 
     fn init(&mut self, state: Option<State>) {
         eprintln!("Set state");
-        if let Some(mut s) = state {
-            s.generate_ui();
+        if let Some(s) = state {
             self.state = Some(s);
         }
     }
@@ -96,6 +95,12 @@ impl App {
         }
         false
     }
+
+    fn gui(&mut self) {
+        if let Some(s) = &mut self.state {
+            s.generate_ui();
+        }
+    }
 }
 
 pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiTrait>) {
@@ -121,22 +126,22 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
     let mut ui_update_needed = false;
 
     event_loop.run(move |event, _, control_flow| {
-        if app.get_mode() == AppMode::APP {
-            // *control_flow = ControlFlow::Wait;
+        // if app.get_mode() == AppMode::APP {
+        //     // *control_flow = ControlFlow::Wait;
 
-            if let Some(next_update) = next_update {
-                *control_flow = ControlFlow::WaitUntil(next_update);
-            } else {
-                *control_flow = ControlFlow::Wait;
-            }
-        }
-        if app.get_mode() == AppMode::GAME {
-            if let Some(next_update) = next_update {
-                *control_flow = ControlFlow::WaitUntil(next_update);
-            } else {
-                *control_flow = ControlFlow::Poll;
-            }
-        }
+        //     if let Some(next_update) = next_update {
+        //         *control_flow = ControlFlow::WaitUntil(next_update);
+        //     } else {
+        //         *control_flow = ControlFlow::Wait;
+        //     }
+        // }
+        // if app.get_mode() == AppMode::GAME {
+        //     if let Some(next_update) = next_update {
+        //         *control_flow = ControlFlow::WaitUntil(next_update);
+        //     } else {
+        //         *control_flow = ControlFlow::Poll;
+        //     }
+        // }
         if app.has_state() {
             app.event(&event);
 
@@ -174,43 +179,70 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
                         }
                     }
                 }
-
-                Event::MainEventsCleared => {
-                    let should_set_ui_on_main_events_cleared =
-                        next_update.is_none() && ui_update_needed;
-
-                    if should_set_ui_on_main_events_cleared {
-                        next_update = Some(std::time::Instant::now() + sixteen_ms);
-                        ui_update_needed = false;
-
-                        // Instantiate a GUI demonstrating every widget type provided by conrod.
-                        // conrod_example_shared::gui(&mut ui.set_widgets(), &ids, &mut app);
-                        app.update();
-
-                        if app.ui_has_changed() {
-                            // If the view has changed at all, request a redraw.
-                            match app.render(window.scale_factor()) {
-                                Ok(_) => {}
-                                Err(RenderError::SwapChainError(wgpu::SwapChainError::Lost)) => {
-                                    app.resize(app.size)
-                                }
-                                Err(RenderError::SwapChainError(
-                                    wgpu::SwapChainError::OutOfMemory,
-                                )) => *control_flow = ControlFlow::Exit,
-                                Err(e) => eprintln!("{:?}", e),
-                            }
-                        } else {
-                            // We don't need to update the UI anymore until more events arrives.
-                            next_update = None;
-                        }
-                    }
-                }
                 Event::Suspended => {
                     log::info!("App suspended");
                     app.init(None);
                 }
                 _ => {}
             };
+
+            let should_set_ui_on_main_events_cleared = next_update.is_none() && ui_update_needed;
+            match (&event, should_set_ui_on_main_events_cleared) {
+                (event::Event::NewEvents(event::StartCause::Init { .. }), _)
+                | (event::Event::NewEvents(event::StartCause::ResumeTimeReached { .. }), _)
+                | (event::Event::MainEventsCleared, true) => {
+                    next_update = Some(std::time::Instant::now() + sixteen_ms);
+                    ui_update_needed = false;
+
+                    // // Instantiate a GUI demonstrating every widget type provided by conrod.
+                    // conrod_example_shared::gui(&mut ui.set_widgets(), &ids, &mut app);
+
+                    // if ui.has_changed() {
+                    //     // If the view has changed at all, request a redraw.
+                    //     window.request_redraw();
+                    // } else {
+                    //     // We don't need to update the UI anymore until more events arrives.
+                    //     next_update = None;
+                    // }
+
+                    // Instantiate a GUI demonstrating every widget type provided by conrod.
+                    // conrod_example_shared::gui(&mut ui.set_widgets(), &ids, &mut app);
+                    app.update();
+                    app.gui();
+
+                    if app.ui_has_changed() {
+                        // If the view has changed at all, request a redraw.
+                        window.request_redraw();
+                    } else {
+                        // We don't need to update the UI anymore until more events arrives.
+                        next_update = None;
+                    }
+                }
+                _ => (),
+            }
+
+            if let Some(next_update) = next_update {
+                *control_flow = ControlFlow::WaitUntil(next_update);
+            } else {
+                *control_flow = ControlFlow::Wait;
+            }
+
+            match &event {
+                event::Event::RedrawRequested(_) => {
+                    // If the view has changed at all, request a redraw.
+                    match app.render(window.scale_factor()) {
+                        Ok(_) => {}
+                        Err(RenderError::SwapChainError(wgpu::SwapChainError::Lost)) => {
+                            app.resize(app.size)
+                        }
+                        Err(RenderError::SwapChainError(wgpu::SwapChainError::OutOfMemory)) => {
+                            *control_flow = ControlFlow::Exit
+                        }
+                        Err(e) => eprintln!("{:?}", e),
+                    }
+                }
+                _ => {}
+            }
         } else {
             match event {
                 Event::Resumed => {
