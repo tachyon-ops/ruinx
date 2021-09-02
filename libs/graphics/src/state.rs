@@ -89,17 +89,18 @@ impl State {
             .await
             .expect("Failed to create device");
 
-        let format = wgpu::TextureFormat::Bgra8UnormSrgb;
+        let swapchain_format = adapter.get_swap_chain_preferred_format(&surface).unwrap();
+
         let sc_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            format,
+            format: swapchain_format,
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
         };
         let swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
-        let renderer = conrod_wgpu::Renderer::new(&device, MSAA_SAMPLES, format);
+        let renderer = conrod_wgpu::Renderer::new(&device, MSAA_SAMPLES, swapchain_format);
 
         let multisampled_framebuffer =
             create_multisampled_framebuffer(&device, &sc_desc, MSAA_SAMPLES);
@@ -112,7 +113,7 @@ impl State {
             .theme(gui.theme())
             .build();
 
-        let ui = gui.init(ui, &device, &mut queue);
+        let ui = gui.init(ui, &device, &mut queue, swapchain_format);
 
         Self {
             size,

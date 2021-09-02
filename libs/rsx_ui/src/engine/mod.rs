@@ -107,6 +107,9 @@ widget_ids! {
     plot_path,
     // Scrollbar
     canvas_scrollbar,
+
+    // new
+    login_page_user_list
   }
 }
 
@@ -145,6 +148,7 @@ impl graphics::GuiTrait for DemoGui {
         mut ui: conrod_core::Ui,
         device: &Device,
         queue: &mut Queue,
+        format: wgpu::TextureFormat,
     ) -> conrod_core::Ui {
         // Load font from file
         let assets = find_folder::Search::KidsThenParents(3, 5)
@@ -164,10 +168,11 @@ impl graphics::GuiTrait for DemoGui {
 
         // Create the GPU texture and upload the image data.
         let (logo_w, logo_h) = rgba_logo_image.dimensions();
-        let logo_tex = graphics::create_logo_texture(&device, queue, rgba_logo_image);
+        let logo_tex = graphics::create_logo_texture(&device, queue, rgba_logo_image, format);
+
         let logo = conrod_wgpu::Image {
             texture: logo_tex,
-            texture_format: graphics::LOGO_TEXTURE_FORMAT,
+            texture_format: format,
             width: logo_w,
             height: logo_h,
         };

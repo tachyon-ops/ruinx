@@ -10,12 +10,11 @@ pub use mode::AppMode;
 pub use run::event_loop;
 pub use state::State;
 
-pub const LOGO_TEXTURE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8UnormSrgb;
-
 pub fn create_logo_texture(
     device: &wgpu::Device,
     queue: &mut wgpu::Queue,
     image: image::RgbaImage,
+    format: wgpu::TextureFormat,
 ) -> wgpu::Texture {
     // Initialise the texture.
     let (width, height) = image.dimensions();
@@ -30,7 +29,7 @@ pub fn create_logo_texture(
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
-        format: LOGO_TEXTURE_FORMAT,
+        format,
         usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
     });
 
