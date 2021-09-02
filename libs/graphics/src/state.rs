@@ -1,7 +1,7 @@
 use conrod_core::Ui;
 use conrod_wgpu::Image;
 use wgpu::TextureView;
-use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
+use winit::{dpi::PhysicalSize, window::Window};
 
 use crate::{GuiTrait, RenderError};
 
@@ -43,11 +43,15 @@ pub struct State {
     multisampled_framebuffer: TextureView,
     renderer: conrod_wgpu::Renderer,
     gui: Box<dyn GuiTrait>,
-    ui: Option<Ui>,
+    ui: Ui,
 }
 
 impl State {
-    pub async fn new(window: &Window, gui: Box<dyn GuiTrait>) -> Self {
+    pub async fn new(
+        window: &Window,
+        gui: Box<dyn GuiTrait>,
+        window_dimensions: conrod_core::Dimensions,
+    ) -> Self {
         eprintln!("State::new");
         log::info!("----------------------------------------- Activating!");
 
@@ -71,7 +75,7 @@ impl State {
 
         log::info!("Device and Queue!");
         // Create the logical device and command queue
-        let (device, queue) = adapter
+        let (device, mut queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
@@ -102,6 +106,14 @@ impl State {
 
         let image_map = conrod_core::image::Map::new();
 
+        eprint!("Generating UI\n");
+        let mut gui = gui;
+        let ui = conrod_core::UiBuilder::new(window_dimensions)
+            .theme(gui.theme())
+            .build();
+
+        let ui = gui.init(ui, &device, &mut queue);
+
         Self {
             size,
             surface,
@@ -114,25 +126,14 @@ impl State {
             renderer,
             image_map,
             gui,
-            ui: None,
+            ui,
         }
-    }
-
-    pub fn generate_ui(&mut self, window_dimensions: conrod_core::Dimensions) {
-        eprint!("Generating UI\n");
-        let mut ui = conrod_core::UiBuilder::new(window_dimensions)
-            .theme(self.gui.theme())
-            .build();
-
-        ui = self.gui.init(ui, &self.device, &mut self.queue);
-        self.ui = Some(ui);
     }
 
     pub fn gui(&mut self) {
-        if let Some(ui) = &mut self.ui {
-            let ui_cell = &mut ui.set_widgets();
-            self.gui.gui(ui_cell);
-        }
+        // Instantiate a GUI demonstrating every widget type provided by conrod.
+        // conrod_example_shared::gui(&mut ui.set_widgets(), &ids, &mut app);
+        self.gui.gui(&mut self.ui.set_widgets());
     }
 
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
@@ -150,118 +151,97 @@ impl State {
     }
 
     pub fn update(&mut self) {
-        // conrod_example_shared::gui(&mut ui.set_widgets(), &ids, &mut app);
-        self.update_gui();
-    }
-
-    pub fn update_gui(&mut self) {
-        eprintln!("State::update_gui");
-        if let Some(ui) = &mut self.ui {
-            eprintln!("State::update_gui has ui");
-
-            // Instantiate a GUI demonstrating every widget type provided by conrod.
-
-            self.gui.gui(&mut ui.set_widgets());
-            ui.has_changed();
-        }
+        //     if let Some(ui) = &mut self.ui {
+        //         ui.has_changed();
+        //     }
     }
 
     pub fn ui_handle_event(&mut self, event: conrod_core::event::Input) {
-        if let Some(ui) = &mut self.ui {
-            ui.handle_event(event);
-        }
+        println!("State::ui_handle_event: event = {:?}", event);
+        self.ui.handle_event(event);
     }
 
     pub fn ui_has_changed(&mut self) -> bool {
-        if let Some(ui) = &mut self.ui {
-            return ui.has_changed();
-        }
-        false
-    }
-
-    pub fn input(&mut self, _event: &WindowEvent) -> bool {
-        false
+        return self.ui.has_changed();
     }
 
     pub fn render(&mut self, scale_factor: f64) -> Result<(), RenderError> {
-        if let Some(ui) = &self.ui {
-            let primitives = ui.draw();
+        let primitives = self.ui.draw();
 
-            // The window frame that we will draw to.
-            let frame = self.swap_chain.get_current_frame().unwrap();
+        // The window frame that we will draw to.
+        let frame = self.swap_chain.get_current_frame().unwrap();
 
-            // Begin encoding commands.
-            let cmd_encoder_desc = wgpu::CommandEncoderDescriptor {
-                label: Some("conrod_command_encoder"),
+        // Begin encoding commands.
+        let cmd_encoder_desc = wgpu::CommandEncoderDescriptor {
+            label: Some("conrod_command_encoder"),
+        };
+        let mut encoder = self.device.create_command_encoder(&cmd_encoder_desc);
+
+        // Feed the renderer primitives and update glyph cache texture if necessary.
+        // let scale_factor = window.scale_factor();
+        let [win_w, win_h]: [f32; 2] = [self.size.width as f32, self.size.height as f32];
+        let viewport = [0.0, 0.0, win_w, win_h];
+        if let Some(cmd) = self
+            .renderer
+            .fill(&self.image_map, viewport, scale_factor, primitives)
+            .unwrap()
+        {
+            cmd.load_buffer_and_encode(&self.device, &mut encoder);
+        }
+
+        // Begin the render pass and add the draw commands.
+        {
+            // This condition allows to more easily tweak the MSAA_SAMPLES constant.
+            let (attachment, resolve_target) = match MSAA_SAMPLES {
+                1 => (&frame.output.view, None),
+                _ => (&self.multisampled_framebuffer, Some(&frame.output.view)),
             };
-            let mut encoder = self.device.create_command_encoder(&cmd_encoder_desc);
+            let color_attachment_desc = wgpu::RenderPassColorAttachment {
+                view: attachment,
+                resolve_target,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                    store: true,
+                },
+            };
 
-            // Feed the renderer primitives and update glyph cache texture if necessary.
-            // let scale_factor = window.scale_factor();
-            let [win_w, win_h]: [f32; 2] = [self.size.width as f32, self.size.height as f32];
-            let viewport = [0.0, 0.0, win_w, win_h];
-            if let Some(cmd) = self
-                .renderer
-                .fill(&self.image_map, viewport, scale_factor, primitives)
-                .unwrap()
+            let render_pass_desc = wgpu::RenderPassDescriptor {
+                label: Some("conrod_render_pass_descriptor"),
+                color_attachments: &[color_attachment_desc],
+                depth_stencil_attachment: None,
+            };
+            let render = self.renderer.render(&self.device, &self.image_map);
+
             {
-                cmd.load_buffer_and_encode(&self.device, &mut encoder);
-            }
-
-            // Begin the render pass and add the draw commands.
-            {
-                // This condition allows to more easily tweak the MSAA_SAMPLES constant.
-                let (attachment, resolve_target) = match MSAA_SAMPLES {
-                    1 => (&frame.output.view, None),
-                    _ => (&self.multisampled_framebuffer, Some(&frame.output.view)),
-                };
-                let color_attachment_desc = wgpu::RenderPassColorAttachment {
-                    view: attachment,
-                    resolve_target,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: true,
-                    },
-                };
-
-                let render_pass_desc = wgpu::RenderPassDescriptor {
-                    label: Some("conrod_render_pass_descriptor"),
-                    color_attachments: &[color_attachment_desc],
-                    depth_stencil_attachment: None,
-                };
-                let render = self.renderer.render(&self.device, &self.image_map);
-
-                {
-                    let mut render_pass = encoder.begin_render_pass(&render_pass_desc);
-                    let slot = 0;
-                    render_pass.set_vertex_buffer(slot, render.vertex_buffer.slice(..));
-                    let instance_range = 0..1;
-                    for cmd in render.commands {
-                        match cmd {
-                            conrod_wgpu::RenderPassCommand::SetPipeline { pipeline } => {
-                                render_pass.set_pipeline(pipeline);
-                            }
-                            conrod_wgpu::RenderPassCommand::SetBindGroup { bind_group } => {
-                                render_pass.set_bind_group(0, bind_group, &[]);
-                            }
-                            conrod_wgpu::RenderPassCommand::SetScissor {
-                                top_left,
-                                dimensions,
-                            } => {
-                                let [x, y] = top_left;
-                                let [w, h] = dimensions;
-                                render_pass.set_scissor_rect(x, y, w, h);
-                            }
-                            conrod_wgpu::RenderPassCommand::Draw { vertex_range } => {
-                                render_pass.draw(vertex_range, instance_range.clone());
-                            }
+                let mut render_pass = encoder.begin_render_pass(&render_pass_desc);
+                let slot = 0;
+                render_pass.set_vertex_buffer(slot, render.vertex_buffer.slice(..));
+                let instance_range = 0..1;
+                for cmd in render.commands {
+                    match cmd {
+                        conrod_wgpu::RenderPassCommand::SetPipeline { pipeline } => {
+                            render_pass.set_pipeline(pipeline);
+                        }
+                        conrod_wgpu::RenderPassCommand::SetBindGroup { bind_group } => {
+                            render_pass.set_bind_group(0, bind_group, &[]);
+                        }
+                        conrod_wgpu::RenderPassCommand::SetScissor {
+                            top_left,
+                            dimensions,
+                        } => {
+                            let [x, y] = top_left;
+                            let [w, h] = dimensions;
+                            render_pass.set_scissor_rect(x, y, w, h);
+                        }
+                        conrod_wgpu::RenderPassCommand::Draw { vertex_range } => {
+                            render_pass.draw(vertex_range, instance_range.clone());
                         }
                     }
                 }
             }
-
-            self.queue.submit(Some(encoder.finish()));
         }
+
+        self.queue.submit(Some(encoder.finish()));
 
         Ok(())
     }

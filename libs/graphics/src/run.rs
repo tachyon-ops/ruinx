@@ -34,14 +34,13 @@ impl App {
 
     fn update(&mut self) {
         match &mut self.state {
-            Some(s) => s.update(),
+            Some(s) => {
+                s.update();
+                s.gui();
+            }
             _ => {}
         }
         self.engine.update();
-    }
-
-    fn event(&mut self, event: &Event<()>) {
-        self.engine.event(event);
     }
 
     fn resize(&mut self, new_size: PhysicalSize<u32>) {
@@ -52,7 +51,7 @@ impl App {
         self.engine.resize(new_size);
     }
 
-    fn init(&mut self, state: Option<State>) {
+    fn set_state(&mut self, state: Option<State>) {
         eprintln!("Set state");
         if let Some(s) = state {
             self.state = Some(s);
@@ -63,11 +62,12 @@ impl App {
         self.state.is_some()
     }
 
-    fn input(&mut self, event: &WindowEvent) -> bool {
-        match &mut self.state {
-            Some(s) => s.input(event),
-            _ => false,
+    fn event_handler(&mut self, evt: &Event<()>, conrod_evt: conrod_core::event::Input) -> bool {
+        self.engine.event(evt);
+        if let Some(s) = &mut self.state {
+            s.ui_handle_event(conrod_evt)
         }
+        false
     }
 
     fn render(&mut self, scale_factor: f64) -> Result<(), RenderError> {
@@ -78,29 +78,11 @@ impl App {
         }
     }
 
-    fn ui_handle_event(&mut self, event: conrod_core::event::Input) {
-        if let Some(s) = &mut self.state {
-            s.ui_handle_event(event);
-        }
-    }
-
     fn ui_has_changed(&mut self) -> bool {
         if let Some(s) = &mut self.state {
             return s.ui_has_changed();
         }
         false
-    }
-
-    fn generate_gui(&mut self, window_dimensions: conrod_core::Dimensions) {
-        if let Some(s) = &mut self.state {
-            s.generate_ui(window_dimensions);
-        }
-    }
-
-    fn update_gui(&mut self) {
-        if let Some(s) = &mut self.state {
-            s.gui();
-        }
     }
 }
 
@@ -120,13 +102,16 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
         .unwrap();
 
     #[cfg(not(target_os = "android"))]
-    let state = Some(block_on(State::new(&window, gui.clone())));
+    let state = Some(block_on(State::new(
+        &window,
+        gui.clone(),
+        [WIN_W as f64, WIN_H as f64],
+    )));
     #[cfg(target_os = "android")]
     let state: std::option::Option<State> = None;
 
     let mut app = App::new(engine);
-    app.init(state);
-    app.generate_gui([WIN_W as f64, WIN_H as f64]);
+    app.set_state(state);
 
     log::info!("    --- EVENT LOOP ---");
 
@@ -152,16 +137,17 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
         //     }
         // }
         if app.has_state() {
-            if let Some(event) = convert_event(&event, &window) {
-                app.ui_handle_event(event);
+            if let Some(conrod_event) = convert_event(&event, &window) {
+                app.event_handler(&event, conrod_event);
                 ui_update_needed = true;
             }
 
             match &event {
                 event::Event::WindowEvent { event, .. } => match event {
                     // Recreate swapchain when window is resized.
-                    event::WindowEvent::Resized(new_size) => {
-                        app.resize(*new_size);
+                    WindowEvent::Resized(physical_size) => app.resize(*physical_size),
+                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                        app.resize(**new_inner_size)
                     }
 
                     // Close on request or on Escape.
@@ -198,7 +184,6 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
                     // conrod_example_shared::gui(&mut ui.set_widgets(), &ids, &mut app);
 
                     app.update();
-                    app.update_gui();
 
                     if app.ui_has_changed() {
                         // If the view has changed at all, request a redraw.
@@ -330,7 +315,11 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
                 Event::Resumed => {
                     log::info!("App resumed");
                     std::thread::sleep(std::time::Duration::from_millis(250));
-                    app.init(Some(block_on(State::new(&window, gui.clone()))));
+                    app.set_state(Some(block_on(State::new(
+                        &window,
+                        gui.clone(),
+                        [WIN_W as f64, WIN_H as f64],
+                    ))));
                 }
                 _ => {}
             }
