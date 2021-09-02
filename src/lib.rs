@@ -9,7 +9,7 @@ pub fn entry() {
     ));
     // set assets
     utils::Utils::set_pc_assets_folder("assets");
-    rsx_ui::App::new("main");
+    rsx_ui::App::new("My App", "main");
 }
 
 /// Bindings entry point

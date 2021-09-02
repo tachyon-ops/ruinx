@@ -982,6 +982,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "find_folder"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f6d018fb95a0b59f854aed68ecd96ce2b80af7911b92b1fed3c4b1fa516b91b"
+
+[[package]]
 name = "fixedbitset"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3101,13 +3107,19 @@ name = "rsx_ui"
 version = "0.1.0"
 dependencies = [
  "app-events",
+ "conrod_core",
+ "conrod_wgpu",
  "dyon",
+ "find_folder",
  "futures 0.3.16",
  "graphics",
+ "image",
+ "rand 0.8.4",
  "rsx-parser",
  "rsx_loader",
  "utils",
  "uuid 0.8.2",
+ "wgpu",
  "winit",
 ]
 

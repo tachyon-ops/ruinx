@@ -1,6 +1,5 @@
 use std::fmt::Display;
 
-use conrod_core::render::Primitives;
 use winit::{dpi::PhysicalSize, event::Event};
 
 use crate::AppMode;
@@ -28,11 +27,11 @@ impl Display for RenderError {
     }
 }
 
-pub trait Stage {
+pub trait Engine {
     fn get_mode(&mut self) -> AppMode;
     fn setup(&mut self);
     fn update(&mut self);
-    fn render(&mut self) -> Result<Primitives, RenderError>;
+    fn render(&mut self) -> Result<(), RenderError>;
     fn event(&mut self, event: &Event<()>);
     fn resize(&mut self, size: PhysicalSize<u32>);
 }
