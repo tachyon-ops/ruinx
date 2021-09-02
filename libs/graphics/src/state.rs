@@ -118,9 +118,9 @@ impl State {
         }
     }
 
-    pub fn generate_ui(&mut self) {
+    pub fn generate_ui(&mut self, window_dimensions: conrod_core::Dimensions) {
         eprint!("Generating UI\n");
-        let mut ui = conrod_core::UiBuilder::new([self.size.width as f64, self.size.height as f64])
+        let mut ui = conrod_core::UiBuilder::new(window_dimensions)
             .theme(self.gui.theme())
             .build();
 
@@ -128,15 +128,24 @@ impl State {
         self.ui = Some(ui);
     }
 
-    pub fn resize(&mut self, size: PhysicalSize<u32>) {
-        log::info!("Resizing: {} x {}", size.width, size.height);
+    pub fn gui(&mut self) {
+        if let Some(ui) = &mut self.ui {
+            let ui_cell = &mut ui.set_widgets();
+            self.gui.gui(ui_cell);
+        }
+    }
+
+    pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
+        log::info!("Resizing: {} x {}", new_size.width, new_size.height);
+
         // Recreate the swap chain with the new size
-        self.size = size;
-        self.sc_desc.width = size.width;
-        self.sc_desc.height = size.height;
+        self.size = new_size;
+        self.sc_desc.width = new_size.width;
+        self.sc_desc.height = new_size.height;
         self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
         self.multisampled_framebuffer =
             create_multisampled_framebuffer(&self.device, &self.sc_desc, MSAA_SAMPLES);
+
         // self.render();
     }
 
@@ -188,6 +197,7 @@ impl State {
             let mut encoder = self.device.create_command_encoder(&cmd_encoder_desc);
 
             // Feed the renderer primitives and update glyph cache texture if necessary.
+            // let scale_factor = window.scale_factor();
             let [win_w, win_h]: [f32; 2] = [self.size.width as f32, self.size.height as f32];
             let viewport = [0.0, 0.0, win_w, win_h];
             if let Some(cmd) = self
@@ -240,13 +250,7 @@ impl State {
                             } => {
                                 let [x, y] = top_left;
                                 let [w, h] = dimensions;
-                                eprint!(
-                                    "window: w: {}, h: {}\n",
-                                    self.size.width, self.size.height
-                                );
-                                eprint!("x: {}, y: {}, w: {}, h: {}\n", x, y, w, h);
-                                // TODO: this is erroring...
-                                // render_pass.set_scissor_rect(x, y, w, h);
+                                render_pass.set_scissor_rect(x, y, w, h);
                             }
                             conrod_wgpu::RenderPassCommand::Draw { vertex_range } => {
                                 render_pass.draw(vertex_range, instance_range.clone());
