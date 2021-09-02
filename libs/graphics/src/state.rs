@@ -50,7 +50,7 @@ impl State {
     pub async fn new(
         window: &Window,
         gui: Box<dyn GuiTrait>,
-        window_dimensions: conrod_core::Dimensions,
+        win_size: winit::dpi::LogicalSize<f64>,
     ) -> Self {
         eprintln!("State::new");
         log::info!("----------------------------------------- Activating!");
@@ -108,7 +108,7 @@ impl State {
 
         eprint!("Generating UI\n");
         let mut gui = gui;
-        let ui = conrod_core::UiBuilder::new(window_dimensions)
+        let ui = conrod_core::UiBuilder::new([win_size.width, win_size.height])
             .theme(gui.theme())
             .build();
 

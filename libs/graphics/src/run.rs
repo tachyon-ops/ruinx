@@ -3,7 +3,7 @@ use std::time::Instant;
 use futures::executor::block_on;
 
 use winit::{
-    dpi::PhysicalSize,
+    dpi::{LogicalSize, PhysicalSize},
     event::{self, Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
@@ -86,18 +86,17 @@ impl App {
     }
 }
 
-pub const WIN_W: u32 = 600;
-pub const WIN_H: u32 = 420;
+fn get_win_size(window: &winit::window::Window) -> LogicalSize<f64> {
+    let scale_factor = window.scale_factor();
+    let size = window.inner_size();
+    size.to_logical(scale_factor)
+}
 
 pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiTrait>) {
     log::info!("Inside RUN!");
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
         .with_title(name)
-        .with_inner_size(winit::dpi::LogicalSize {
-            width: WIN_W,
-            height: WIN_H,
-        })
         .build(&event_loop)
         .unwrap();
 
@@ -105,7 +104,7 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
     let state = Some(block_on(State::new(
         &window,
         gui.clone(),
-        [WIN_W as f64, WIN_H as f64],
+        get_win_size(&window),
     )));
     #[cfg(target_os = "android")]
     let state: std::option::Option<State> = None;
@@ -318,7 +317,7 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
                     app.set_state(Some(block_on(State::new(
                         &window,
                         gui.clone(),
-                        [WIN_W as f64, WIN_H as f64],
+                        get_win_size(&window),
                     ))));
                 }
                 _ => {}
