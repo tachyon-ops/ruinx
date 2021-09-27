@@ -58,7 +58,10 @@ impl State {
         log::info!("Size: {} x {}", size.width, size.height);
 
         log::info!("Instance");
+        #[cfg(not(target_os = "android"))]
         let instance = wgpu::Instance::new(wgpu::Backends::all());
+        #[cfg(target_os = "android")]
+        let instance = wgpu::Instance::new(wgpu::Backends::GL);
 
         log::info!("Surface");
         let surface = unsafe { instance.create_surface(window) };
@@ -261,7 +264,7 @@ impl State {
 
                             log::info!("Will do set_scissor_rect");
 
-                            #[cfg(not(target_os = "android"))]
+                            // #[cfg(not(target_os = "android"))]
                             render_pass.set_scissor_rect(x, y, w, h);
                         }
                         conrod_wgpu::RenderPassCommand::Draw { vertex_range } => {
