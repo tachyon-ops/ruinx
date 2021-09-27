@@ -9,12 +9,12 @@ const MSAA_SAMPLES: u32 = 4;
 
 fn create_multisampled_framebuffer(
     device: &wgpu::Device,
-    sc_desc: &wgpu::SwapChainDescriptor,
+    surface_config: &wgpu::SurfaceConfiguration,
     sample_count: u32,
 ) -> wgpu::TextureView {
     let multisampled_texture_extent = wgpu::Extent3d {
-        width: sc_desc.width,
-        height: sc_desc.height,
+        width: surface_config.width,
+        height: surface_config.height,
         depth_or_array_layers: 1,
     };
     let multisampled_frame_descriptor = &wgpu::TextureDescriptor {
@@ -23,8 +23,8 @@ fn create_multisampled_framebuffer(
         mip_level_count: 1,
         sample_count: sample_count,
         dimension: wgpu::TextureDimension::D2,
-        format: sc_desc.format,
-        usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
+        format: surface_config.format,
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
     };
     device
         .create_texture(multisampled_frame_descriptor)
@@ -37,8 +37,7 @@ pub struct State {
     // adapter: wgpu::Adapter,
     device: wgpu::Device,
     queue: wgpu::Queue,
-    sc_desc: wgpu::SwapChainDescriptor,
-    swap_chain: wgpu::SwapChain,
+    surface_config: wgpu::SurfaceConfiguration,
     image_map: conrod_core::image::Map<Image>,
     multisampled_framebuffer: TextureView,
     renderer: conrod_wgpu::Renderer,
@@ -59,7 +58,7 @@ impl State {
         log::info!("Size: {} x {}", size.width, size.height);
 
         log::info!("Instance");
-        let instance = wgpu::Instance::new(wgpu::BackendBit::all());
+        let instance = wgpu::Instance::new(wgpu::Backends::all());
 
         log::info!("Surface");
         let surface = unsafe { instance.create_surface(window) };
@@ -78,33 +77,51 @@ impl State {
         let (device, mut queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    label: None,
+                    label: Some("conrod_device_descriptor"),
                     features: wgpu::Features::empty(),
-                    // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the swapchain.
-                    // limits: wgpu::Limits::downlevel_defaults().using_resolution(adapter.limits()),
-                    limits: wgpu::Limits::default(),
+                    limits: wgpu::Limits::default().using_resolution(adapter.limits()),
                 },
                 None,
             )
             .await
             .expect("Failed to create device");
 
-        let swapchain_format = adapter.get_swap_chain_preferred_format(&surface).unwrap();
-
-        let sc_desc = wgpu::SwapChainDescriptor {
-            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            format: swapchain_format,
+        log::info!("Get swapchain format");
+        let format = surface.get_preferred_format(&adapter).unwrap();
+        let mut surface_config = wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format,
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
         };
-        let swap_chain = device.create_swap_chain(&surface, &sc_desc);
+        surface.configure(&device, &surface_config);
 
-        let renderer = conrod_wgpu::Renderer::new(&device, MSAA_SAMPLES, swapchain_format);
+        // Create the renderer for rendering conrod primitives.
+        let mut renderer = conrod_wgpu::Renderer::new(&device, MSAA_SAMPLES, format);
 
-        let multisampled_framebuffer =
-            create_multisampled_framebuffer(&device, &sc_desc, MSAA_SAMPLES);
+        // The intermediary multisampled texture that will be resolved (MSAA).
+        let mut multisampled_framebuffer =
+            create_multisampled_framebuffer(&device, &surface_config, MSAA_SAMPLES);
 
+        // let sc_desc = wgpu::SwapChainDescriptor {
+        //     usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
+        //     format,
+        //     width: size.width,
+        //     height: size.height,
+        //     present_mode: wgpu::PresentMode::Mailbox,
+        // };
+        // log::info!("Get swapchain");
+        // let swap_chain = device.create_swap_chain(&surface, &sc_desc);
+
+        // log::info!("Get renderer");
+        // let renderer = conrod_wgpu::Renderer::new(&device, MSAA_SAMPLES, format);
+
+        // log::info!("Get multisampled_framebuffer");
+        // let multisampled_framebuffer =
+        //     create_multisampled_framebuffer(&device, &sc_desc, MSAA_SAMPLES);
+
+        log::info!("Get image_map");
         let image_map = conrod_core::image::Map::new();
 
         eprint!("Generating UI\n");
@@ -113,16 +130,14 @@ impl State {
             .theme(gui.theme())
             .build();
 
-        let ui = gui.init(ui, &device, &mut queue, swapchain_format);
+        let ui = gui.init(ui, &device, &mut queue, format);
 
         Self {
             size,
             surface,
-            // adapter,
             device,
             queue,
-            sc_desc,
-            swap_chain,
+            surface_config,
             multisampled_framebuffer,
             renderer,
             image_map,
@@ -141,12 +156,11 @@ impl State {
         log::info!("Resizing: {} x {}", new_size.width, new_size.height);
 
         // Recreate the swap chain with the new size
-        self.size = new_size;
-        self.sc_desc.width = new_size.width;
-        self.sc_desc.height = new_size.height;
-        self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
+        self.surface_config.width = new_size.width;
+        self.surface_config.height = new_size.height;
+        self.surface.configure(&self.device, &self.surface_config);
         self.multisampled_framebuffer =
-            create_multisampled_framebuffer(&self.device, &self.sc_desc, MSAA_SAMPLES);
+            create_multisampled_framebuffer(&self.device, &self.surface_config, MSAA_SAMPLES);
 
         // self.render();
     }
@@ -158,7 +172,7 @@ impl State {
     }
 
     pub fn ui_handle_event(&mut self, event: conrod_core::event::Input) {
-        println!("State::ui_handle_event: event = {:?}", event);
+        // println!("State::ui_handle_event: event = {:?}", event);
         self.ui.handle_event(event);
     }
 
@@ -170,13 +184,14 @@ impl State {
         let primitives = self.ui.draw();
 
         // The window frame that we will draw to.
-        let frame = self.swap_chain.get_current_frame().unwrap();
+        let frame = self.surface.get_current_frame().unwrap();
 
         // Begin encoding commands.
-        let cmd_encoder_desc = wgpu::CommandEncoderDescriptor {
-            label: Some("conrod_command_encoder"),
-        };
-        let mut encoder = self.device.create_command_encoder(&cmd_encoder_desc);
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("conrod_command_encoder"),
+            });
 
         // Feed the renderer primitives and update glyph cache texture if necessary.
         // let scale_factor = window.scale_factor();
@@ -190,12 +205,18 @@ impl State {
             cmd.load_buffer_and_encode(&self.device, &mut encoder);
         }
 
+        // Create a view for the surface's texture.
+        let frame_tex_view = frame
+            .output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+
         // Begin the render pass and add the draw commands.
         {
             // This condition allows to more easily tweak the MSAA_SAMPLES constant.
             let (attachment, resolve_target) = match MSAA_SAMPLES {
-                1 => (&frame.output.view, None),
-                _ => (&self.multisampled_framebuffer, Some(&frame.output.view)),
+                1 => (&frame_tex_view, None),
+                _ => (&self.multisampled_framebuffer, Some(&frame_tex_view)),
             };
             let color_attachment_desc = wgpu::RenderPassColorAttachment {
                 view: attachment,
@@ -206,19 +227,24 @@ impl State {
                 },
             };
 
-            let render_pass_desc = wgpu::RenderPassDescriptor {
-                label: Some("conrod_render_pass_descriptor"),
-                color_attachments: &[color_attachment_desc],
-                depth_stencil_attachment: None,
-            };
             let render = self.renderer.render(&self.device, &self.image_map);
 
             {
-                let mut render_pass = encoder.begin_render_pass(&render_pass_desc);
+                log::info!("Will do render_pass");
+                let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("conrod_render_pass_descriptor"),
+                    color_attachments: &[color_attachment_desc],
+                    depth_stencil_attachment: None,
+                });
                 let slot = 0;
+                log::info!("Will do render_pass set_vertex_buffer");
                 render_pass.set_vertex_buffer(slot, render.vertex_buffer.slice(..));
                 let instance_range = 0..1;
+                log::info!("Will iterate render.commands");
+                let mut i = 0;
                 for cmd in render.commands {
+                    log::info!(" > Render.command {}", i);
+
                     match cmd {
                         conrod_wgpu::RenderPassCommand::SetPipeline { pipeline } => {
                             render_pass.set_pipeline(pipeline);
@@ -232,16 +258,21 @@ impl State {
                         } => {
                             let [x, y] = top_left;
                             let [w, h] = dimensions;
+
+                            log::info!("Will do set_scissor_rect");
+
+                            #[cfg(not(target_os = "android"))]
                             render_pass.set_scissor_rect(x, y, w, h);
                         }
                         conrod_wgpu::RenderPassCommand::Draw { vertex_range } => {
                             render_pass.draw(vertex_range, instance_range.clone());
                         }
                     }
+                    i += 1;
                 }
             }
         }
-
+        log::info!("Will submit queue");
         self.queue.submit(Some(encoder.finish()));
 
         Ok(())

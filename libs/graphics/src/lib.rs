@@ -10,11 +10,12 @@ pub use mode::AppMode;
 pub use run::event_loop;
 pub use state::State;
 
+const LOGO_TEXTURE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8UnormSrgb;
+
 pub fn create_logo_texture(
     device: &wgpu::Device,
     queue: &mut wgpu::Queue,
     image: image::RgbaImage,
-    format: wgpu::TextureFormat,
 ) -> wgpu::Texture {
     // Initialise the texture.
     let (width, height) = image.dimensions();
@@ -29,8 +30,8 @@ pub fn create_logo_texture(
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
-        format,
-        usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
+        format: LOGO_TEXTURE_FORMAT,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
     });
 
     // Upload the pixel data.
@@ -47,18 +48,14 @@ pub fn create_logo_texture(
         texture: &logo_tex,
         mip_level: 0,
         origin: wgpu::Origin3d::ZERO,
+        aspect: wgpu::TextureAspect::All,
     };
     let extent = wgpu::Extent3d {
         width: width,
         height: height,
         depth_or_array_layers: 1,
     };
-    let cmd_encoder_desc = wgpu::CommandEncoderDescriptor {
-        label: Some("conrod_upload_image_command_encoder"),
-    };
-    let encoder = device.create_command_encoder(&cmd_encoder_desc);
     queue.write_texture(texture_copy_view, data, data_layout, extent);
-    queue.submit(Some(encoder.finish()));
 
     logo_tex
 }

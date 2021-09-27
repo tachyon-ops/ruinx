@@ -298,10 +298,10 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
             //         // If the view has changed at all, request a redraw.
             //         match app.render(window.scale_factor()) {
             //             Ok(_) => {}
-            //             Err(RenderError::SwapChainError(wgpu::SwapChainError::Lost)) => {
+            //             Err(RenderError::SurfaceError(wgpu::SurfaceError::Lost)) => {
             //                 app.resize(app.size)
             //             }
-            //             Err(RenderError::SwapChainError(wgpu::SwapChainError::OutOfMemory)) => {
+            //             Err(RenderError::SurfaceError(wgpu::SurfaceError::OutOfMemory)) => {
             //                 *control_flow = ControlFlow::Exit
             //             }
             //             Err(e) => eprintln!("{:?}", e),

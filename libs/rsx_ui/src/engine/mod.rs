@@ -11,6 +11,8 @@ use uuid::Uuid;
 use conrod_core::widget_ids;
 use wgpu::{Device, Queue};
 
+use crate::widgets::draggable_widget::DraggableWidget;
+
 pub struct UiEngine {
     _current_view_uuid: Uuid,
     dom: UiDom,
@@ -73,8 +75,11 @@ impl UiEngine {
 widget_ids! {
   #[derive(Clone)]
   pub struct Ids {
+    root,
     // The scrollable canvas.
     canvas,
+    // draggable
+    draggable_scroll,
     // The title and introduction widgets.
     title,
     introduction,
@@ -168,7 +173,7 @@ impl graphics::GuiTrait for DemoGui {
 
         // Create the GPU texture and upload the image data.
         let (logo_w, logo_h) = rgba_logo_image.dimensions();
-        let logo_tex = graphics::create_logo_texture(&device, queue, rgba_logo_image, format);
+        let logo_tex = graphics::create_logo_texture(&device, queue, rgba_logo_image);
 
         let logo = conrod_wgpu::Image {
             texture: logo_tex,
@@ -198,6 +203,43 @@ impl graphics::GuiTrait for DemoGui {
             // following widgets, as well as a scrollable container for the children widgets.
             widget::Canvas::new()
                 .pad(MARGIN)
+                .scroll_kids_vertically()
+                // .border(10.0)
+                // .border_rgba(0.0, 255.0, 0.0, 1.0)
+                .set(ids.root, ui);
+
+            // let (mut items, scrollbar) = ScrollByDrag::new(
+            //     widget::List::flow_down(1), //.scrollbar_on_top(), // .item_size(30.0),
+            // )
+            // .fill(ids.root)
+            // .set(ids.draggable_scroll, ui);
+
+            // ScrollByDrag::new(inner)
+            //     // .kid_area_w_of(ids.root)
+            //     // .kid_area_h_of(ids.root)
+            //     // .scroll_kids_horizontally()
+            //     .fill(ids.root)
+            //     .set(ids.draggable_scroll, ui);
+
+            // while let Some(item) = items.next(ui) {
+            //     let inner = widget::Canvas::new()
+            //         // .pad(MARGIN)
+            //         .kid_area_w_of(ids.root)
+            //         .kid_area_h_of(ids.root)
+            //         .scroll_kids_vertically();
+            //     item.set(inner, ui);
+            //     inner.set(ids.canvas, ui);
+            // }
+
+            // // inner.set(ids.canvas, ui);
+            // if let Some(scrollbar) = scrollbar {
+            //     scrollbar.set(ui);
+            // }
+
+            widget::Canvas::new()
+                // .pad(MARGIN)
+                .kid_area_w_of(ids.root)
+                .kid_area_h_of(ids.root)
                 .scroll_kids_vertically()
                 .set(ids.canvas, ui);
 
@@ -444,8 +486,10 @@ impl graphics::GuiTrait for DemoGui {
             /////////////////////
 
             widget::Scrollbar::y_axis(ids.canvas)
-                .auto_hide(true)
+                .auto_hide(false)
                 .set(ids.canvas_scrollbar, ui);
+
+            DraggableWidget::y_axis(ids.canvas).set(ids.draggable_scroll, ui);
         }
     }
 

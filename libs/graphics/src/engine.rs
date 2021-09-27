@@ -6,21 +6,21 @@ use crate::AppMode;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum RenderError {
-    SwapChainError(wgpu::SwapChainError),
+    SurfaceError(wgpu::SurfaceError),
     MissplacedCall,
     Unknown,
 }
 
-impl From<wgpu::SwapChainError> for RenderError {
-    fn from(error: wgpu::SwapChainError) -> RenderError {
-        RenderError::SwapChainError(error)
+impl From<wgpu::SurfaceError> for RenderError {
+    fn from(error: wgpu::SurfaceError) -> RenderError {
+        RenderError::SurfaceError(error)
     }
 }
 
 impl Display for RenderError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::SwapChainError(inner) => write!(f, "{}", inner),
+            Self::SurfaceError(inner) => write!(f, "{}", inner),
             Self::MissplacedCall => write!(f, "Render function was called in the wrong place"),
             _ => write!(f, "Unknown render error"),
         }
