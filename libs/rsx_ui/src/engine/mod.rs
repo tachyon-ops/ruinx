@@ -8,7 +8,7 @@ pub use event_handler::EventHandler;
 use graphics::Engine;
 use uuid::Uuid;
 
-use conrod_core::{text::Font, widget_ids};
+use conrod_core::widget_ids;
 use wgpu::{Device, Queue};
 
 use crate::widgets::draggable_widget::DraggableWidget;
@@ -162,7 +162,7 @@ impl graphics::GuiTrait for DemoGui {
 
         // Load the Rust logo from our assets folder to use as an example image.F
         let logo = "images/rust.png";
-        let rgba_logo_image = crate::assets::load_image(logo).to_rgba();
+        let rgba_logo_image = crate::assets::load_image(logo).to_rgba8();
 
         // Create the GPU texture and upload the image data.
         let (logo_w, logo_h) = rgba_logo_image.dimensions();

@@ -9,7 +9,14 @@ use winit::{
     window::WindowBuilder,
 };
 
-use crate::{engine::RenderError, AppMode, Engine, GuiTrait, State};
+use crate::{
+    //
+    engine::RenderError,
+    // AppMode,
+    Engine,
+    GuiTrait,
+    State,
+};
 
 // Generate the winit <-> conrod_core type conversion fns.
 conrod_winit::v023_conversion_fns!();
@@ -28,9 +35,9 @@ impl App {
         }
     }
 
-    fn get_mode(&mut self) -> AppMode {
-        self.engine.get_mode()
-    }
+    // fn get_mode(&mut self) -> AppMode {
+    //     self.engine.get_mode()
+    // }
 
     fn update(&mut self) {
         match &mut self.state {

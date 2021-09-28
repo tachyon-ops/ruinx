@@ -11,15 +11,17 @@ pub struct Dimensions {
 }
 
 impl Dimensions {
-    fn padding_box(self) -> Rect {
-        self.content.expanded_by(self.padding)
-    }
-    fn border_box(self) -> Rect {
-        self.padding_box().expanded_by(self.border)
-    }
-    fn margin_box(self) -> Rect {
-        self.border_box().expanded_by(self.margin)
-    }
+    // fn padding_box(self) -> Rect {
+    //     self.content.expanded_by(self.padding)
+    // }
+
+    // fn border_box(self) -> Rect {
+    //     self.padding_box().expanded_by(self.border)
+    // }
+
+    // fn margin_box(self) -> Rect {
+    //     self.border_box().expanded_by(self.margin)
+    // }
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -39,14 +41,16 @@ impl Rect {
             height: (self.height - val - val).floor(),
         }
     }
-    fn expanded_by(self, edge: EdgeSizes) -> Rect {
-        Rect {
-            x: self.x - edge.left,
-            y: self.y - edge.top,
-            width: self.width + edge.left + edge.right,
-            height: self.height + edge.top + edge.bottom,
-        }
-    }
+
+    // fn expanded_by(self, edge: EdgeSizes) -> Rect {
+    //     Rect {
+    //         x: self.x - edge.left,
+    //         y: self.y - edge.top,
+    //         width: self.width + edge.left + edge.right,
+    //         height: self.height + edge.top + edge.bottom,
+    //     }
+    // }
+
     pub fn contains(self, x: f32, y: f32) -> bool {
         self.x <= x && self.x + self.width >= x && self.y <= y && self.y + self.height > y
     }

@@ -91,7 +91,7 @@ impl State {
 
         log::info!("Get swapchain format");
         let format = surface.get_preferred_format(&adapter).unwrap();
-        let mut surface_config = wgpu::SurfaceConfiguration {
+        let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format,
             width: size.width,
@@ -101,10 +101,10 @@ impl State {
         surface.configure(&device, &surface_config);
 
         // Create the renderer for rendering conrod primitives.
-        let mut renderer = conrod_wgpu::Renderer::new(&device, MSAA_SAMPLES, format);
+        let renderer = conrod_wgpu::Renderer::new(&device, MSAA_SAMPLES, format);
 
         // The intermediary multisampled texture that will be resolved (MSAA).
-        let mut multisampled_framebuffer =
+        let multisampled_framebuffer =
             create_multisampled_framebuffer(&device, &surface_config, MSAA_SAMPLES);
 
         log::info!("Get image_map");

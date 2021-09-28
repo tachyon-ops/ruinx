@@ -3,7 +3,6 @@
 use conrod_core::graph;
 use conrod_core::input::touch::Phase;
 use conrod_core::position::{Range, Scalar};
-use conrod_core::widget::list_select::Mode;
 use conrod_core::widget::scroll::{self, X, Y};
 
 use conrod_core::utils;
@@ -17,12 +16,14 @@ impl MoveEvent {
     fn new() -> Self {
         Self([0.0, 0.0])
     }
-    fn set(&mut self, new_position: [f64; 2]) {
-        self.0 = new_position
-    }
-    fn get(&self) -> [f64; 2] {
-        self.0
-    }
+
+    // fn set(&mut self, new_position: [f64; 2]) {
+    //     self.0 = new_position
+    // }
+
+    // fn get(&self) -> [f64; 2] {
+    //     self.0
+    // }
 }
 
 /// A widget that allows for scrolling via dragging the mouse.
@@ -54,7 +55,7 @@ widget_ids! {
 /// The state of the `Scrollbar`.
 pub struct State {
     _ids: Ids,
-    previous_move: MoveEvent,
+    _previous_move: MoveEvent,
 }
 
 impl<A> DraggableWidget<A> {
@@ -100,7 +101,7 @@ where
     fn init_state(&self, id_gen: widget::id::Generator) -> Self::State {
         State {
             _ids: Ids::new(id_gen),
-            previous_move: MoveEvent::new(),
+            _previous_move: MoveEvent::new(),
         }
     }
 
@@ -109,7 +110,7 @@ where
     fn update(self, args: widget::UpdateArgs<Self>) -> Self::Event {
         let widget::UpdateArgs {
             id: _,
-            state,
+            // state,
             rect: _,
             style: _,
             ui,
@@ -123,7 +124,7 @@ where
         let mut additional_offset: f64 = 0.0;
         for widget_event in ui.widget_input(widget).events() {
             use conrod_core::event;
-            use conrod_core::input;
+            // use conrod_core::input;
 
             let handle_pos_range_len = || 99999.0;
             let offset_bounds = || 99999.0;
