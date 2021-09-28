@@ -1,7 +1,35 @@
-use std::borrow::Cow;
-use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
+use conrod_core::Ui;
+use conrod_wgpu::Image;
+use wgpu::TextureView;
+use winit::{dpi::PhysicalSize, window::Window};
 
-use crate::RenderError;
+use crate::{GuiTrait, RenderError};
+
+const MSAA_SAMPLES: u32 = 4;
+
+fn create_multisampled_framebuffer(
+    device: &wgpu::Device,
+    surface_config: &wgpu::SurfaceConfiguration,
+    sample_count: u32,
+) -> wgpu::TextureView {
+    let multisampled_texture_extent = wgpu::Extent3d {
+        width: surface_config.width,
+        height: surface_config.height,
+        depth_or_array_layers: 1,
+    };
+    let multisampled_frame_descriptor = &wgpu::TextureDescriptor {
+        label: Some("conrod_msaa_texture"),
+        size: multisampled_texture_extent,
+        mip_level_count: 1,
+        sample_count: sample_count,
+        dimension: wgpu::TextureDimension::D2,
+        format: surface_config.format,
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+    };
+    device
+        .create_texture(multisampled_frame_descriptor)
+        .create_view(&wgpu::TextureViewDescriptor::default())
+}
 
 pub struct State {
     pub size: PhysicalSize<u32>,
@@ -9,21 +37,31 @@ pub struct State {
     // adapter: wgpu::Adapter,
     device: wgpu::Device,
     queue: wgpu::Queue,
-    sc_desc: wgpu::SwapChainDescriptor,
-    swap_chain: wgpu::SwapChain,
-    render_pipeline: wgpu::RenderPipeline,
+    surface_config: wgpu::SurfaceConfiguration,
+    image_map: conrod_core::image::Map<Image>,
+    multisampled_framebuffer: TextureView,
+    renderer: conrod_wgpu::Renderer,
+    gui: Box<dyn GuiTrait>,
+    ui: Ui,
 }
 
 impl State {
-    pub async fn new(window: &Window) -> Self {
+    pub async fn new(
+        window: &Window,
+        gui: Box<dyn GuiTrait>,
+        win_size: winit::dpi::LogicalSize<f64>,
+    ) -> Self {
+        eprintln!("State::new");
         log::info!("----------------------------------------- Activating!");
-        log::info!("Activating now!");
 
         let size = window.inner_size();
         log::info!("Size: {} x {}", size.width, size.height);
 
         log::info!("Instance");
-        let instance = wgpu::Instance::new(wgpu::BackendBit::all());
+        // #[cfg(not(target_os = "android"))]
+        let instance = wgpu::Instance::new(wgpu::Backends::all());
+        // #[cfg(target_os = "android")]
+        // let instance = wgpu::Instance::new(wgpu::Backends::GL);
 
         log::info!("Surface");
         let surface = unsafe { instance.create_surface(window) };
@@ -39,127 +77,188 @@ impl State {
 
         log::info!("Device and Queue!");
         // Create the logical device and command queue
-        let (device, queue) = adapter
+        let (device, mut queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    label: None,
+                    label: Some("conrod_device_descriptor"),
                     features: wgpu::Features::empty(),
-                    // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the swapchain.
-                    // limits: wgpu::Limits::downlevel_defaults().using_resolution(adapter.limits()),
-                    limits: wgpu::Limits::default(),
+                    limits: wgpu::Limits::default().using_resolution(adapter.limits()),
                 },
                 None,
             )
             .await
             .expect("Failed to create device");
 
-        log::info!("Shader");
-
-        // Load the shaders from disk
-        let shader = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: None,
-            flags: wgpu::ShaderFlags::all(),
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
-        });
-
-        log::info!("Pipeline layout");
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: None,
-            bind_group_layouts: &[],
-            push_constant_ranges: &[],
-        });
-
-        log::info!("Swapchain format");
-
-        // OpenGL BUG (simulator): rust_jsx_ui: Swapchain format
-        // I/RustStdoutStderr: thread '<unnamed>' panicked at 'called `Option::unwrap()` on a `None` value', /Users/nmpribeiro/.cargo/registry/src/github.com-1ecc6299db9ec823/wgpu-core-0.9.2/src/hub.rs:878:29
-        //     stack backtrace:
-        let swapchain_format = adapter.get_swap_chain_preferred_format(&surface).unwrap();
-
-        log::info!("Render pipeline");
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: None,
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[],
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[swapchain_format.into()],
-            }),
-            primitive: wgpu::PrimitiveState::default(),
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
-        });
-
-        log::info!("Swapchain description");
-        let sc_desc = wgpu::SwapChainDescriptor {
-            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            format: swapchain_format,
+        log::info!("Get swapchain format");
+        let format = surface.get_preferred_format(&adapter).unwrap();
+        let surface_config = wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format,
             width: size.width,
             height: size.height,
-            present_mode: wgpu::PresentMode::Mailbox,
+            present_mode: wgpu::PresentMode::Fifo,
         };
+        surface.configure(&device, &surface_config);
 
-        log::info!("Swapchain");
-        let swap_chain = device.create_swap_chain(&surface, &sc_desc);
+        // Create the renderer for rendering conrod primitives.
+        let renderer = conrod_wgpu::Renderer::new(&device, MSAA_SAMPLES, format);
+
+        // The intermediary multisampled texture that will be resolved (MSAA).
+        let multisampled_framebuffer =
+            create_multisampled_framebuffer(&device, &surface_config, MSAA_SAMPLES);
+
+        log::info!("Get image_map");
+        let image_map = conrod_core::image::Map::new();
+
+        eprint!("Generating UI\n");
+        let mut gui = gui;
+        let ui = conrod_core::UiBuilder::new([win_size.width, win_size.height])
+            .theme(gui.theme())
+            .build();
+
+        let ui = gui.init(ui, &device, &mut queue, format);
 
         Self {
             size,
             surface,
-            // adapter,
             device,
             queue,
-            sc_desc,
-            swap_chain,
-            render_pipeline,
+            surface_config,
+            multisampled_framebuffer,
+            renderer,
+            image_map,
+            gui,
+            ui,
         }
     }
 
-    pub fn resize(&mut self, size: PhysicalSize<u32>) {
-        log::info!("Resizing: {} x {}", size.width, size.height);
+    pub fn gui(&mut self) {
+        // Instantiate a GUI demonstrating every widget type provided by conrod.
+        // conrod_example_shared::gui(&mut ui.set_widgets(), &ids, &mut app);
+        self.gui.gui(&mut self.ui.set_widgets());
+    }
+
+    pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
+        log::info!("Resizing: {} x {}", new_size.width, new_size.height);
+
         // Recreate the swap chain with the new size
-        self.sc_desc.width = size.width;
-        self.sc_desc.height = size.height;
-        self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
+        self.surface_config.width = new_size.width;
+        self.surface_config.height = new_size.height;
+        self.surface.configure(&self.device, &self.surface_config);
+        self.multisampled_framebuffer =
+            create_multisampled_framebuffer(&self.device, &self.surface_config, MSAA_SAMPLES);
+
         // self.render();
     }
 
-    pub fn update(&mut self) {}
-
-    pub fn input(&mut self, _event: &WindowEvent) -> bool {
-        false
+    pub fn update(&mut self) {
+        //     if let Some(ui) = &mut self.ui {
+        //         ui.has_changed();
+        //     }
     }
 
-    pub fn render(&mut self) -> Result<(), RenderError> {
-        let frame = self
-            .swap_chain
-            .get_current_frame()
-            .expect("Failed to acquire next swap chain texture")
-            .output;
+    pub fn ui_handle_event(&mut self, event: conrod_core::event::Input) {
+        // println!("State::ui_handle_event: event = {:?}", event);
+        self.ui.handle_event(event);
+    }
+
+    pub fn ui_has_changed(&mut self) -> bool {
+        return self.ui.has_changed();
+    }
+
+    pub fn render(&mut self, scale_factor: f64) -> Result<(), RenderError> {
+        let primitives = self.ui.draw();
+
+        // The window frame that we will draw to.
+        let frame = self.surface.get_current_frame().unwrap();
+
+        // Begin encoding commands.
         let mut encoder = self
             .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-        {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: None,
-                color_attachments: &[wgpu::RenderPassColorAttachment {
-                    view: &frame.view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
-                        store: true,
-                    },
-                }],
-                depth_stencil_attachment: None,
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("conrod_command_encoder"),
             });
-            rpass.set_pipeline(&self.render_pipeline);
-            rpass.draw(0..3, 0..1);
+
+        // Feed the renderer primitives and update glyph cache texture if necessary.
+        // let scale_factor = window.scale_factor();
+        let [win_w, win_h]: [f32; 2] = [self.size.width as f32, self.size.height as f32];
+        let viewport = [0.0, 0.0, win_w, win_h];
+        if let Some(cmd) = self
+            .renderer
+            .fill(&self.image_map, viewport, scale_factor, primitives)
+            .unwrap()
+        {
+            cmd.load_buffer_and_encode(&self.device, &mut encoder);
         }
 
+        // Create a view for the surface's texture.
+        let frame_tex_view = frame
+            .output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+
+        // Begin the render pass and add the draw commands.
+        {
+            // This condition allows to more easily tweak the MSAA_SAMPLES constant.
+            let (attachment, resolve_target) = match MSAA_SAMPLES {
+                1 => (&frame_tex_view, None),
+                _ => (&self.multisampled_framebuffer, Some(&frame_tex_view)),
+            };
+            let color_attachment_desc = wgpu::RenderPassColorAttachment {
+                view: attachment,
+                resolve_target,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                    store: true,
+                },
+            };
+
+            let render = self.renderer.render(&self.device, &self.image_map);
+
+            {
+                log::info!("Will do render_pass");
+                let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("conrod_render_pass_descriptor"),
+                    color_attachments: &[color_attachment_desc],
+                    depth_stencil_attachment: None,
+                });
+                let slot = 0;
+                log::info!("Will do render_pass set_vertex_buffer");
+                render_pass.set_vertex_buffer(slot, render.vertex_buffer.slice(..));
+                let instance_range = 0..1;
+                log::info!("Will iterate render.commands");
+                let mut i = 0;
+                for cmd in render.commands {
+                    log::info!(" > Render.command {}", i);
+
+                    match cmd {
+                        conrod_wgpu::RenderPassCommand::SetPipeline { pipeline } => {
+                            render_pass.set_pipeline(pipeline);
+                        }
+                        conrod_wgpu::RenderPassCommand::SetBindGroup { bind_group } => {
+                            render_pass.set_bind_group(0, bind_group, &[]);
+                        }
+                        conrod_wgpu::RenderPassCommand::SetScissor {
+                            top_left,
+                            dimensions,
+                        } => {
+                            let [x, y] = top_left;
+                            let [w, h] = dimensions;
+
+                            log::info!("Will do set_scissor_rect");
+
+                            // #[cfg(not(target_os = "android"))]
+                            render_pass.set_scissor_rect(x, y, w, h);
+                        }
+                        conrod_wgpu::RenderPassCommand::Draw { vertex_range } => {
+                            render_pass.draw(vertex_range, instance_range.clone());
+                        }
+                    }
+                    i += 1;
+                }
+            }
+        }
+        log::info!("Will submit queue");
         self.queue.submit(Some(encoder.finish()));
 
         Ok(())

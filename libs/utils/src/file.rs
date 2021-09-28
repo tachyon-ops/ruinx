@@ -49,6 +49,10 @@ pub async fn load_file(path: &str) -> Result<Vec<u8>, FileError> {
         exec::FileLoadingFuture { contents }
     }
 
+    load_file_inner(&get_path(path)).await
+}
+
+pub fn get_path(path: &str) -> String {
     #[cfg(target_os = "ios")]
     let _ = std::env::set_current_dir(std::env::current_exe().unwrap().parent().unwrap());
 
@@ -58,8 +62,7 @@ pub async fn load_file(path: &str) -> Result<Vec<u8>, FileError> {
     } else {
         path.to_string()
     };
-
-    load_file_inner(&path).await
+    path.to_string()
 }
 
 /// Load string from the path and block until its loaded.
@@ -96,4 +99,38 @@ pub async fn load_string(path: &str) -> Result<String, FileError> {
 /// `set_pc_assets_folder("assets");`call before first `load_file`/`load_texture` will allow using same pathes on PC and Android.
 pub fn set_pc_assets_folder(path: &str) {
     crate::get_assets_context().pc_assets_folder = Some(path.to_string());
+}
+
+use std::io;
+
+#[cfg(target_os = "android")]
+pub fn open_android_file<'a>(path: &str) -> io::Result<Vec<u8>> {
+    use ndk_glue;
+    use std::ffi::CString;
+    use std::io::Read;
+    let activity = ndk_glue::native_activity();
+    let asset_manager = activity.asset_manager();
+
+    let mut asset = asset_manager
+        .open(&CString::new(path).unwrap())
+        .ok_or(crate::fs::Error::AndroidAssetLoadingError)
+        .unwrap();
+
+    let mut buffer: Vec<u8> = vec![];
+    asset.read_to_end(&mut buffer)?;
+    Ok(buffer)
+}
+
+pub fn open_file<'a>(path: &str) -> io::Result<Vec<u8>> {
+    use std::fs::File;
+    use std::io::BufReader;
+    use std::io::Read;
+
+    let f = File::open(path)?;
+    let mut reader: BufReader<File> = BufReader::new(f);
+    let mut buffer: Vec<u8> = vec![];
+
+    // // Read file into vector.
+    reader.read_to_end(&mut buffer)?;
+    Ok(buffer)
 }

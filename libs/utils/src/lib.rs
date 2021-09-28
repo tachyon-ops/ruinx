@@ -1,6 +1,8 @@
+use std::io;
+
 mod exec;
 mod file;
-mod fs;
+pub mod fs;
 
 pub use file::FileError;
 
@@ -38,22 +40,32 @@ fn get_assets_context() -> &'static mut AssetsContext {
     }
 }
 
-pub struct Utils;
+pub async fn load_file(path: &str) -> Result<Vec<u8>, file::FileError> {
+    file::load_file(path).await
+}
 
-impl Utils {
-    pub fn get_assets_context() -> &'static mut AssetsContext {
-        get_assets_context()
+pub async fn load_string(path: &str) -> Result<String, file::FileError> {
+    file::load_string(path).await
+}
+
+pub fn set_pc_assets_folder(path: &str) {
+    file::set_pc_assets_folder(path);
+}
+
+pub fn get_path(path: &str) -> String {
+    file::get_path(path)
+}
+
+pub fn open_file<'a>(path: &str) -> io::Result<Vec<u8>> {
+    #[cfg(target_os = "android")]
+    {
+        return file::open_android_file(path);
     }
 
-    pub async fn load_file(path: &str) -> Result<Vec<u8>, file::FileError> {
-        file::load_file(path).await
-    }
-
-    pub async fn load_string(path: &str) -> Result<String, file::FileError> {
-        file::load_string(path).await
-    }
-
-    pub fn set_pc_assets_folder(path: &str) {
-        file::set_pc_assets_folder(path);
+    #[cfg(not(target_os = "android"))]
+    {
+        let file_path = get_path(path);
+        let new_path = file_path.as_str();
+        return file::open_file(new_path);
     }
 }

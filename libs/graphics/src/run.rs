@@ -1,150 +1,331 @@
+use std::time::Instant;
+
 use futures::executor::block_on;
 
 use winit::{
-    dpi::PhysicalSize,
-    event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    dpi::{LogicalSize, PhysicalSize},
+    event::{self, Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
 
-use crate::{stage::RenderError, AppMode, Stage, State};
+use crate::{
+    //
+    engine::RenderError,
+    // AppMode,
+    Engine,
+    GuiTrait,
+    State,
+};
+
+// Generate the winit <-> conrod_core type conversion fns.
+conrod_winit::v023_conversion_fns!();
 
 struct App {
-    size: PhysicalSize<u32>,
-    stage: Box<dyn Stage>,
+    engine: Box<dyn Engine>,
     state: Option<State>,
 }
 
 impl App {
-    fn new(stage: Box<dyn Stage>, state: Option<State>, size: PhysicalSize<u32>) -> App {
-        App { stage, state, size }
+    fn new(mut engine: Box<dyn Engine>) -> App {
+        engine.setup();
+        App {
+            engine,
+            state: None,
+        }
     }
-    fn get_mode(&mut self) -> AppMode {
-        self.stage.get_mode()
-    }
-    fn setup(&mut self) {
-        self.stage.setup();
-    }
+
+    // fn get_mode(&mut self) -> AppMode {
+    //     self.engine.get_mode()
+    // }
+
     fn update(&mut self) {
         match &mut self.state {
-            Some(s) => s.update(),
+            Some(s) => {
+                s.update();
+                s.gui();
+            }
             _ => {}
         }
-        self.stage.update();
+        self.engine.update();
     }
-    fn event(&mut self, event: &Event<()>) {
-        self.stage.event(event);
-    }
+
     fn resize(&mut self, new_size: PhysicalSize<u32>) {
-        self.size = new_size;
         match &mut self.state {
             Some(s) => s.resize(new_size),
             _ => {}
         }
-        self.stage.resize(new_size);
+        self.engine.resize(new_size);
     }
+
     fn set_state(&mut self, state: Option<State>) {
-        self.state = state;
+        eprintln!("Set state");
+        if let Some(s) = state {
+            self.state = Some(s);
+        }
     }
+
     fn has_state(&mut self) -> bool {
         self.state.is_some()
     }
-    fn input(&mut self, event: &WindowEvent) -> bool {
-        match &mut self.state {
-            Some(s) => s.input(event),
-            _ => false,
+
+    fn event_handler(&mut self, evt: &Event<()>, conrod_evt: conrod_core::event::Input) -> bool {
+        self.engine.event(evt);
+        if let Some(s) = &mut self.state {
+            s.ui_handle_event(conrod_evt)
         }
+        false
     }
-    fn render(&mut self) -> Result<(), RenderError> {
+
+    fn render(&mut self, scale_factor: f64) -> Result<(), RenderError> {
+        self.engine.update();
         match &mut self.state {
-            Some(s) => {
-                self.stage.render()?;
-                s.render()
-            }
+            Some(s) => s.render(scale_factor),
             _ => Err(RenderError::MissplacedCall),
         }
     }
+
+    fn ui_has_changed(&mut self) -> bool {
+        if let Some(s) = &mut self.state {
+            return s.ui_has_changed();
+        }
+        false
+    }
 }
 
-const APP_NAME: &'static str = env!("CARGO_PKG_NAME");
+fn get_win_size(window: &winit::window::Window) -> LogicalSize<f64> {
+    let scale_factor = window.scale_factor();
+    let size = window.inner_size();
+    size.to_logical(scale_factor)
+}
 
-pub fn event_loop(stage: Box<dyn Stage>) {
+pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiTrait>) {
     log::info!("Inside RUN!");
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
-        .with_title(APP_NAME)
+        .with_title(name)
         .build(&event_loop)
         .unwrap();
 
     #[cfg(not(target_os = "android"))]
-    let mut state_ = Some(block_on(State::new(&window)));
+    let state = Some(block_on(State::new(
+        &window,
+        gui.clone(),
+        get_win_size(&window),
+    )));
     #[cfg(target_os = "android")]
-    let mut state_: std::option::Option<State> = None;
+    let state: std::option::Option<State> = None;
 
-    let mut app = App::new(stage, state_, window.inner_size());
-
-    app.setup();
+    let mut app = App::new(engine);
+    app.set_state(state);
 
     log::info!("    --- EVENT LOOP ---");
 
+    let sixteen_ms = std::time::Duration::from_millis(16);
+    let mut next_update: Option<Instant> = None;
+    let mut ui_update_needed = false;
+
     event_loop.run(move |event, _, control_flow| {
-        if app.get_mode() == AppMode::APP {
-            *control_flow = ControlFlow::Wait;
-        }
-        if app.get_mode() == AppMode::GAME {
-            *control_flow = ControlFlow::Poll;
-        }
+        // if app.get_mode() == AppMode::APP {
+        //     // *control_flow = ControlFlow::Wait;
+
+        //     if let Some(next_update) = next_update {
+        //         *control_flow = ControlFlow::WaitUntil(next_update);
+        //     } else {
+        //         *control_flow = ControlFlow::Wait;
+        //     }
+        // }
+        // if app.get_mode() == AppMode::GAME {
+        //     if let Some(next_update) = next_update {
+        //         *control_flow = ControlFlow::WaitUntil(next_update);
+        //     } else {
+        //         *control_flow = ControlFlow::Poll;
+        //     }
+        // }
         if app.has_state() {
-            app.event(&event);
-            match event {
-                Event::WindowEvent {
-                    ref event,
-                    window_id,
-                } if window_id == window.id() => {
-                    if !app.input(event) {
-                        match event {
-                            WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                            WindowEvent::KeyboardInput { input, .. } => match input {
-                                KeyboardInput {
-                                    state: ElementState::Pressed,
-                                    virtual_keycode: Some(VirtualKeyCode::Escape),
-                                    ..
-                                } => *control_flow = ControlFlow::Exit,
-                                _ => {}
+            if let Some(conrod_event) = convert_event(&event, &window) {
+                app.event_handler(&event, conrod_event);
+                ui_update_needed = true;
+            }
+
+            match &event {
+                event::Event::WindowEvent { event, .. } => match event {
+                    // Recreate swapchain when window is resized.
+                    WindowEvent::Resized(physical_size) => app.resize(*physical_size),
+                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                        app.resize(**new_inner_size)
+                    }
+
+                    // Close on request or on Escape.
+                    event::WindowEvent::KeyboardInput {
+                        input:
+                            event::KeyboardInput {
+                                virtual_keycode: Some(event::VirtualKeyCode::Escape),
+                                state: event::ElementState::Pressed,
+                                ..
                             },
-                            WindowEvent::Resized(physical_size) => app.resize(*physical_size),
-                            WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                                app.resize(**new_inner_size)
-                            }
-                            _ => {}
-                        }
+                        ..
                     }
-                }
-                Event::MainEventsCleared => {
+                    | event::WindowEvent::CloseRequested => {
+                        *control_flow = ControlFlow::Exit;
+                        return;
+                    }
+                    _ => {}
+                },
+                _ => {}
+            }
+
+            // We don't want to draw any faster than 60 FPS, so set the UI only on every 16ms, unless:
+            // - this is the very first event, or
+            // - we didn't request update on the last event and new events have arrived since then.
+            let should_set_ui_on_main_events_cleared = next_update.is_none() && ui_update_needed;
+            match (&event, should_set_ui_on_main_events_cleared) {
+                (event::Event::NewEvents(event::StartCause::Init { .. }), _)
+                | (event::Event::NewEvents(event::StartCause::ResumeTimeReached { .. }), _)
+                | (event::Event::MainEventsCleared, true) => {
+                    next_update = Some(std::time::Instant::now() + sixteen_ms);
+                    ui_update_needed = false;
+
+                    // Instantiate a GUI demonstrating every widget type provided by conrod.
+                    // conrod_example_shared::gui(&mut ui.set_widgets(), &ids, &mut app);
+
                     app.update();
-                    match app.render() {
-                        Ok(_) => {}
-                        Err(RenderError::SwapChainError(wgpu::SwapChainError::Lost)) => {
-                            app.resize(app.size)
-                        }
-                        Err(RenderError::SwapChainError(wgpu::SwapChainError::OutOfMemory)) => {
-                            *control_flow = ControlFlow::Exit
-                        }
-                        Err(e) => eprintln!("{:?}", e),
+
+                    if app.ui_has_changed() {
+                        // If the view has changed at all, request a redraw.
+                        window.request_redraw();
+                    } else {
+                        // We don't need to update the UI anymore until more events arrives.
+                        next_update = None;
                     }
                 }
-                Event::Suspended => {
-                    log::info!("App suspended");
-                    app.set_state(None);
+                _ => (),
+            }
+            if let Some(next_update) = next_update {
+                *control_flow = ControlFlow::WaitUntil(next_update);
+            } else {
+                *control_flow = ControlFlow::Wait;
+            }
+
+            match &event {
+                event::Event::RedrawRequested(_) => {
+                    match app.render(window.scale_factor()) {
+                        _ => {}
+                    };
                 }
                 _ => {}
-            };
+            }
+
+            // app.event(&event);
+
+            // if let Some(event) = convert_event(&event, &window) {
+            //     app.ui_handle_event(event);
+            //     ui_update_needed = true;
+            // }
+
+            // match event {
+            //     Event::WindowEvent {
+            //         ref event,
+            //         window_id,
+            //     } if window_id == window.id() => {
+            //         if !app.input(event) {
+            //             match event {
+            //                 WindowEvent::Resized(physical_size) => app.resize(*physical_size),
+            //                 WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+            //                     app.resize(**new_inner_size)
+            //                 }
+            //                 // Close on request or on Escape.
+            //                 event::WindowEvent::KeyboardInput {
+            //                     input:
+            //                         event::KeyboardInput {
+            //                             virtual_keycode: Some(event::VirtualKeyCode::Escape),
+            //                             state: event::ElementState::Pressed,
+            //                             ..
+            //                         },
+            //                     ..
+            //                 }
+            //                 | event::WindowEvent::CloseRequested => {
+            //                     *control_flow = ControlFlow::Exit;
+            //                     return;
+            //                 }
+            //                 _ => {}
+            //             }
+            //         }
+            //     }
+            //     Event::Suspended => {
+            //         log::info!("App suspended");
+            //         app.init(None);
+            //     }
+            //     _ => {}
+            // };
+
+            // let should_set_ui_on_main_events_cleared = next_update.is_none() && ui_update_needed;
+            // match (&event, should_set_ui_on_main_events_cleared) {
+            //     (event::Event::NewEvents(event::StartCause::Init { .. }), _)
+            //     | (event::Event::NewEvents(event::StartCause::ResumeTimeReached { .. }), _)
+            //     | (event::Event::MainEventsCleared, true) => {
+            //         next_update = Some(std::time::Instant::now() + sixteen_ms);
+            //         ui_update_needed = false;
+
+            //         // // Instantiate a GUI demonstrating every widget type provided by conrod.
+            //         // conrod_example_shared::gui(&mut ui.set_widgets(), &ids, &mut app);
+
+            //         // if ui.has_changed() {
+            //         //     // If the view has changed at all, request a redraw.
+            //         //     window.request_redraw();
+            //         // } else {
+            //         //     // We don't need to update the UI anymore until more events arrives.
+            //         //     next_update = None;
+            //         // }
+
+            //         // Instantiate a GUI demonstrating every widget type provided by conrod.
+            //         // conrod_example_shared::gui(&mut ui.set_widgets(), &ids, &mut app);
+            //         app.update();
+            //         app.gui();
+
+            //         if app.ui_has_changed() {
+            //             // If the view has changed at all, request a redraw.
+            //             window.request_redraw();
+            //         } else {
+            //             // We don't need to update the UI anymore until more events arrives.
+            //             next_update = None;
+            //         }
+            //     }
+            //     _ => (),
+            // }
+
+            // if let Some(next_update) = next_update {
+            //     *control_flow = ControlFlow::WaitUntil(next_update);
+            // } else {
+            //     *control_flow = ControlFlow::Wait;
+            // }
+
+            // match &event {
+            //     event::Event::RedrawRequested(_) => {
+            //         // If the view has changed at all, request a redraw.
+            //         match app.render(window.scale_factor()) {
+            //             Ok(_) => {}
+            //             Err(RenderError::SurfaceError(wgpu::SurfaceError::Lost)) => {
+            //                 app.resize(app.size)
+            //             }
+            //             Err(RenderError::SurfaceError(wgpu::SurfaceError::OutOfMemory)) => {
+            //                 *control_flow = ControlFlow::Exit
+            //             }
+            //             Err(e) => eprintln!("{:?}", e),
+            //         }
+            //     }
+            //     _ => {}
+            // }
         } else {
             match event {
                 Event::Resumed => {
                     log::info!("App resumed");
                     std::thread::sleep(std::time::Duration::from_millis(250));
-                    app.set_state(Some(block_on(State::new(&window))));
+                    app.set_state(Some(block_on(State::new(
+                        &window,
+                        gui.clone(),
+                        get_win_size(&window),
+                    ))));
                 }
                 _ => {}
             }

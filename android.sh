@@ -1,7 +1,8 @@
 # #!/usr/bin/env bash
 
-export ANDROID_SDK_ROOT=/Users/$USER/android
-export NDK_HOME=$ANDROID_SDK_ROOT/android/android-ndk-r20/
+# export ANDROID_SDK_ROOT=/Users/$USER/android
+export ANDROID_SDK_ROOT=/Users/$USER/Library/Android/sdk
+export NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
 echo "Using the following Android and NDK:"
 echo $ANDROID_SDK_ROOT
 echo $NDK_HOME

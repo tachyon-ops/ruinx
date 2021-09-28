@@ -5,7 +5,7 @@ use crate::{engine, rsx_lang, scripting_lang, ui::app_ui::UiExample};
 pub struct App {}
 
 impl App {
-    pub fn new(entry_point: &'static str) {
+    pub fn new(name: &'static str, entry_point: &'static str) {
         // for now, scripts only show it can be loaded!
         block_on(App::start_script(entry_point));
 
@@ -14,7 +14,8 @@ impl App {
         let ast = block_on(rsx_lang::RSXLang::new(entry_point));
         let app_mode = graphics::AppMode::APP;
         let ui = UiExample::new(ast);
-        engine::Engine::run(app_mode, Box::new(ui));
+
+        engine::UiEngine::run(name, app_mode, Box::new(ui));
     }
 
     async fn start_script(entry_point: &str) {
