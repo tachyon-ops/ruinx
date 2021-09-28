@@ -4135,7 +4135,7 @@ checksum = "d8b77fdfd5a253be4ab714e4ffa3c49caf146b4de743e97510c0656cf90f1e8e"
 [[package]]
 name = "wgpu"
 version = "0.10.1"
-source = "git+https://github.com/kvark/wgpu?branch=layer-limit#fd05449a97e34faeca4e8da6b3ebff77d3997949"
+source = "git+https://github.com/gfx-rs/wgpu.git#9bc59084926dc66a29bfffdc0a960d7cebbf2e62"
 dependencies = [
  "arrayvec",
  "js-sys",
@@ -4154,7 +4154,7 @@ dependencies = [
 [[package]]
 name = "wgpu-core"
 version = "0.10.0"
-source = "git+https://github.com/kvark/wgpu?branch=layer-limit#fd05449a97e34faeca4e8da6b3ebff77d3997949"
+source = "git+https://github.com/gfx-rs/wgpu.git#9bc59084926dc66a29bfffdc0a960d7cebbf2e62"
 dependencies = [
  "arrayvec",
  "bitflags",
@@ -4175,7 +4175,7 @@ dependencies = [
 [[package]]
 name = "wgpu-hal"
 version = "0.10.1"
-source = "git+https://github.com/kvark/wgpu?branch=layer-limit#fd05449a97e34faeca4e8da6b3ebff77d3997949"
+source = "git+https://github.com/gfx-rs/wgpu.git#9bc59084926dc66a29bfffdc0a960d7cebbf2e62"
 dependencies = [
  "arrayvec",
  "ash",
@@ -4208,7 +4208,7 @@ dependencies = [
 [[package]]
 name = "wgpu-types"
 version = "0.10.0"
-source = "git+https://github.com/kvark/wgpu?branch=layer-limit#fd05449a97e34faeca4e8da6b3ebff77d3997949"
+source = "git+https://github.com/gfx-rs/wgpu.git#9bc59084926dc66a29bfffdc0a960d7cebbf2e62"
 dependencies = [
  "bitflags",
 ]
