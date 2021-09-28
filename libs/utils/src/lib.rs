@@ -1,3 +1,5 @@
+use std::io;
+
 mod exec;
 mod file;
 pub mod fs;
@@ -52,4 +54,18 @@ pub fn set_pc_assets_folder(path: &str) {
 
 pub fn get_path(path: &str) -> String {
     file::get_path(path)
+}
+
+pub fn open_file<'a>(path: &str) -> io::Result<Vec<u8>> {
+    #[cfg(target_os = "android")]
+    {
+        return file::open_android_file(path);
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        let file_path = get_path(path);
+        let new_path = file_path.as_str();
+        return file::open_file(new_path);
+    }
 }

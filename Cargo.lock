@@ -428,7 +428,7 @@ dependencies = [
 name = "conrod_core"
 version = "0.74.0"
 dependencies = [
- "conrod_derive 0.74.0",
+ "conrod_derive",
  "copypasta",
  "daggy",
  "fnv",
@@ -441,17 +441,6 @@ dependencies = [
 [[package]]
 name = "conrod_derive"
 version = "0.74.0"
-dependencies = [
- "proc-macro2 1.0.28",
- "quote 1.0.9",
- "syn 1.0.74",
-]
-
-[[package]]
-name = "conrod_derive"
-version = "0.74.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e19707efa7d816532a5738edce5bfa61912d3d78deb7427ccf3a3f491a5716d0"
 dependencies = [
  "proc-macro2 1.0.28",
  "quote 1.0.9",
@@ -2909,14 +2898,13 @@ version = "0.1.0"
 dependencies = [
  "app-events",
  "conrod_core",
- "conrod_derive 0.74.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "conrod_derive",
  "conrod_wgpu",
  "dyon",
  "find_folder",
  "futures 0.3.16",
  "graphics",
  "image",
- "ndk-glue",
  "rand 0.8.4",
  "rsx-parser",
  "rsx_loader",
