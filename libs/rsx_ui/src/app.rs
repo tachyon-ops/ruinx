@@ -14,6 +14,7 @@ impl App {
         let ast = block_on(rsx_lang::RSXLang::new(entry_point));
         let app_mode = graphics::AppMode::APP;
         let ui = UiExample::new(ast);
+
         engine::UiEngine::run(name, app_mode, Box::new(ui));
     }
 

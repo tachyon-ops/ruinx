@@ -11,7 +11,7 @@ impl Script {
         let file = format!("dyon/{}.dyon", entry_point);
 
         println!("Scripting file: {}", file);
-        let source_res = utils::Utils::load_string(&file).await;
+        let source_res = utils::load_string(&file).await;
         match source_res {
             Ok(source) => {
                 error(run_str(entry_point, Arc::new(source)));

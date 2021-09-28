@@ -34,23 +34,24 @@ pub fn load_file<F: Fn(Response) + 'static>(path: &str, on_loaded: F) {
 }
 
 #[cfg(target_os = "android")]
+pub fn load_file_android_sync(path: &str) -> Response {
+    use std::ffi::CString;
+    use std::io::Read;
+    let activity = ndk_glue::native_activity();
+    let asset_manager = activity.asset_manager();
+
+    let mut asset = asset_manager
+        .open(&CString::new(path).unwrap())
+        .ok_or(Error::AndroidAssetLoadingError)?;
+
+    let mut data: Vec<u8> = vec![];
+    asset.read_to_end(&mut data);
+    Ok(data)
+}
+
+#[cfg(target_os = "android")]
 pub fn load_file_android<F: Fn(Response)>(name: &str, on_loaded: F) {
-    fn load_file_sync(path: &str) -> Response {
-        use std::ffi::CString;
-        use std::io::Read;
-        let activity = ndk_glue::native_activity();
-        let asset_manager = activity.asset_manager();
-
-        let mut asset = asset_manager
-            .open(&CString::new(path).unwrap())
-            .ok_or(Error::AndroidAssetLoadingError)?;
-
-        let mut data: Vec<u8> = vec![];
-        asset.read_to_end(&mut data);
-        Ok(data)
-    }
-
-    let response = load_file_sync(name);
+    let response = load_file_android_sync(name);
     on_loaded(response);
 }
 

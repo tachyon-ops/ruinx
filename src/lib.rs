@@ -8,7 +8,7 @@ pub fn entry() {
         },
     ));
     // set assets
-    utils::Utils::set_pc_assets_folder("assets");
+    utils::set_pc_assets_folder("assets");
     rsx_ui::App::new("RuinX", "main");
 }
 

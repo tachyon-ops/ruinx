@@ -8,7 +8,7 @@ pub use event_handler::EventHandler;
 use graphics::Engine;
 use uuid::Uuid;
 
-use conrod_core::widget_ids;
+use conrod_core::{text::Font, widget_ids};
 use wgpu::{Device, Queue};
 
 use crate::widgets::draggable_widget::DraggableWidget;
@@ -156,23 +156,17 @@ impl graphics::GuiTrait for DemoGui {
         format: wgpu::TextureFormat,
     ) -> conrod_core::Ui {
         // Load font from file
-        let assets = find_folder::Search::KidsThenParents(3, 5)
-            .for_folder("assets")
-            .expect("Assets folder not found");
-        let font = "fonts/NotoSans/NotoSans-Regular.ttf";
-        let font_path = assets.join(font);
-        ui.fonts
-            .insert_from_file(font_path)
-            .expect(&format!("Font {} not found", font));
+        let font_path = "fonts/NotoSans/NotoSans-Regular.ttf";
+        let font = crate::assets::load_font(font_path);
+        ui.fonts.insert(font);
 
-        // Load the Rust logo from our assets folder to use as an example image.
-        let logo_path = assets.join("images/rust.png");
-        let rgba_logo_image = image::open(logo_path)
-            .expect("Couldn't load logo")
-            .to_rgba8();
+        // Load the Rust logo from our assets folder to use as an example image.F
+        let logo = "images/rust.png";
+        let rgba_logo_image = crate::assets::load_image(logo).to_rgba();
 
         // Create the GPU texture and upload the image data.
         let (logo_w, logo_h) = rgba_logo_image.dimensions();
+        eprintln!("Logo dimensions: {} x {}", logo_w, logo_h);
         let logo_tex = graphics::create_logo_texture(&device, queue, rgba_logo_image);
 
         let logo = conrod_wgpu::Image {

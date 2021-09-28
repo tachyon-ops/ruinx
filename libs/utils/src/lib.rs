@@ -1,6 +1,6 @@
 mod exec;
 mod file;
-mod fs;
+pub mod fs;
 
 pub use file::FileError;
 
@@ -38,22 +38,18 @@ fn get_assets_context() -> &'static mut AssetsContext {
     }
 }
 
-pub struct Utils;
+pub async fn load_file(path: &str) -> Result<Vec<u8>, file::FileError> {
+    file::load_file(path).await
+}
 
-impl Utils {
-    pub fn get_assets_context() -> &'static mut AssetsContext {
-        get_assets_context()
-    }
+pub async fn load_string(path: &str) -> Result<String, file::FileError> {
+    file::load_string(path).await
+}
 
-    pub async fn load_file(path: &str) -> Result<Vec<u8>, file::FileError> {
-        file::load_file(path).await
-    }
+pub fn set_pc_assets_folder(path: &str) {
+    file::set_pc_assets_folder(path);
+}
 
-    pub async fn load_string(path: &str) -> Result<String, file::FileError> {
-        file::load_string(path).await
-    }
-
-    pub fn set_pc_assets_folder(path: &str) {
-        file::set_pc_assets_folder(path);
-    }
+pub fn get_path(path: &str) -> String {
+    file::get_path(path)
 }

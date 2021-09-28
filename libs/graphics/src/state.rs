@@ -58,10 +58,10 @@ impl State {
         log::info!("Size: {} x {}", size.width, size.height);
 
         log::info!("Instance");
-        #[cfg(not(target_os = "android"))]
+        // #[cfg(not(target_os = "android"))]
         let instance = wgpu::Instance::new(wgpu::Backends::all());
-        #[cfg(target_os = "android")]
-        let instance = wgpu::Instance::new(wgpu::Backends::GL);
+        // #[cfg(target_os = "android")]
+        // let instance = wgpu::Instance::new(wgpu::Backends::GL);
 
         log::info!("Surface");
         let surface = unsafe { instance.create_surface(window) };
@@ -106,23 +106,6 @@ impl State {
         // The intermediary multisampled texture that will be resolved (MSAA).
         let mut multisampled_framebuffer =
             create_multisampled_framebuffer(&device, &surface_config, MSAA_SAMPLES);
-
-        // let sc_desc = wgpu::SwapChainDescriptor {
-        //     usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-        //     format,
-        //     width: size.width,
-        //     height: size.height,
-        //     present_mode: wgpu::PresentMode::Mailbox,
-        // };
-        // log::info!("Get swapchain");
-        // let swap_chain = device.create_swap_chain(&surface, &sc_desc);
-
-        // log::info!("Get renderer");
-        // let renderer = conrod_wgpu::Renderer::new(&device, MSAA_SAMPLES, format);
-
-        // log::info!("Get multisampled_framebuffer");
-        // let multisampled_framebuffer =
-        //     create_multisampled_framebuffer(&device, &sc_desc, MSAA_SAMPLES);
 
         log::info!("Get image_map");
         let image_map = conrod_core::image::Map::new();

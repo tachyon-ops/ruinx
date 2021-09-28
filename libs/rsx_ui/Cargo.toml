@@ -20,9 +20,15 @@ winit = "0.25.0"
 # conrod_core = "0.74.0"
 # conrod_wgpu = "0.74.0"
 conrod_core = {path = "../../../github/conrod/conrod_core"}
-conrod_wgpu = {path = "../../../github/conrod/backends/conrod_wgpu"}
 conrod_derive = "0.74.0"
+conrod_wgpu = {path = "../../../github/conrod/backends/conrod_wgpu"}
 find_folder = "0.3.0"
 image = "0.23.14"
 rand = "0.8.4"
-wgpu = "0.10.2"
+# wgpu = "0.10.2"
+wgpu = {git = "https://github.com/kvark/wgpu", branch = "layer-limit"}
+
+rusttype = "0.9.2"
+
+[target.'cfg(target_os = "android")'.dependencies]
+ndk-glue = "0.3.0"

@@ -2,6 +2,7 @@ pub mod app;
 pub mod dom;
 pub mod engine;
 pub mod ui;
+pub mod assets;
 pub mod widgets;
 
 pub mod rsx_lang;

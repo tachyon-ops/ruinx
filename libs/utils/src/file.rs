@@ -49,6 +49,10 @@ pub async fn load_file(path: &str) -> Result<Vec<u8>, FileError> {
         exec::FileLoadingFuture { contents }
     }
 
+    load_file_inner(&get_path(path)).await
+}
+
+pub fn get_path(path: &str) -> String {
     #[cfg(target_os = "ios")]
     let _ = std::env::set_current_dir(std::env::current_exe().unwrap().parent().unwrap());
 
@@ -58,8 +62,7 @@ pub async fn load_file(path: &str) -> Result<Vec<u8>, FileError> {
     } else {
         path.to_string()
     };
-
-    load_file_inner(&path).await
+    path.to_string()
 }
 
 /// Load string from the path and block until its loaded.
