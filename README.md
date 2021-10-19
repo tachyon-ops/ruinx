@@ -2,6 +2,15 @@
 
 A cool experiment to create a Rust UI using JSX
 
+## Clone
+
+`git clone https://github.com/nmpribeiro/ruinx.git`
+`git submodule update --init --recursive`
+
+or
+
+`git clone --recursive https://github.com/nmpribeiro/ruinx.git`
+
 ## iOS BUILD
 
 ## Build & Run

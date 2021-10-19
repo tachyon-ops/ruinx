@@ -2916,7 +2916,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust_jsx_ui"
+name = "ruinx"
 version = "0.1.0"
 dependencies = [
  "android_logger 0.10.1",
@@ -4247,8 +4247,7 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "winit"
 version = "0.25.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79610794594d5e86be473ef7763f604f2159cbac8c94debd00df8fb41e86c2f8"
+source = "git+https://github.com/nmpribeiro/winit.git?branch=fix/v25_ios#76033f42189bcecf0bc73e49617ca824d501da94"
 dependencies = [
  "bitflags",
  "cocoa",

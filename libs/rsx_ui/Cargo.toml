@@ -14,7 +14,7 @@ rsx-parser = {git = "https://github.com/nmpribeiro/rsx-parser.git"}
 rsx_loader = {path = "../rsx_loader"}
 utils = {path = "../utils"}
 uuid = {version = "0.8", features = ["v4"]}
-winit = "0.25.0"
+winit = {git = "https://github.com/nmpribeiro/winit.git", branch = "fix/v25_ios"}
 
 find_folder = "0.3.0"
 image = "0.23.14"
