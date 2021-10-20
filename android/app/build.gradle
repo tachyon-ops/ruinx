@@ -7,7 +7,7 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-		applicationId "io.github.nmpribeiro.rust_jsx_ui"
+		applicationId "io.github.nmpribeiro.ruinx"
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 1
