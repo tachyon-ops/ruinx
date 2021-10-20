@@ -105,7 +105,6 @@ use std::io;
 
 #[cfg(target_os = "android")]
 pub fn open_android_file<'a>(path: &str) -> io::Result<Vec<u8>> {
-    use ndk_glue;
     use std::ffi::CString;
     use std::io::Read;
     let activity = ndk_glue::native_activity();
@@ -121,6 +120,7 @@ pub fn open_android_file<'a>(path: &str) -> io::Result<Vec<u8>> {
     Ok(buffer)
 }
 
+#[allow(dead_code)]
 pub fn open_file<'a>(path: &str) -> io::Result<Vec<u8>> {
     use std::fs::File;
     use std::io::BufReader;

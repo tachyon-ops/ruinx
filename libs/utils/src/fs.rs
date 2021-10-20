@@ -45,7 +45,7 @@ pub fn load_file_android_sync(path: &str) -> Response {
         .ok_or(Error::AndroidAssetLoadingError)?;
 
     let mut data: Vec<u8> = vec![];
-    asset.read_to_end(&mut data);
+    let _ = asset.read_to_end(&mut data);
     Ok(data)
 }
 

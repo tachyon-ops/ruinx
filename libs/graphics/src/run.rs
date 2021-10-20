@@ -3,7 +3,7 @@ use std::time::Instant;
 use futures::executor::block_on;
 
 use winit::{
-    dpi::{LogicalSize, PhysicalSize},
+    dpi::PhysicalSize,
     event::{self, Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
@@ -41,10 +41,7 @@ impl App {
 
     fn update(&mut self) {
         match &mut self.state {
-            Some(s) => {
-                s.update();
-                s.gui();
-            }
+            Some(s) => s.update(),
             _ => {}
         }
         self.engine.update();

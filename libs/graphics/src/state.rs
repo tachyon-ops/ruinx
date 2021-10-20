@@ -1,11 +1,7 @@
 use conrod_core::Ui;
 use conrod_wgpu::Image;
 use wgpu::TextureView;
-use winit::{
-    dpi::PhysicalSize,
-    event_loop::EventLoop,
-    window::{Window, WindowBuilder},
-};
+use winit::{dpi::PhysicalSize, window::Window};
 
 use crate::{GuiTrait, RenderError};
 
@@ -160,9 +156,7 @@ impl State {
     }
 
     pub fn update(&mut self) {
-        //     if let Some(ui) = &mut self.ui {
-        //         ui.has_changed();
-        //     }
+        self.gui()
     }
 
     pub fn ui_handle_event(&mut self, event: conrod_core::event::Input) {
