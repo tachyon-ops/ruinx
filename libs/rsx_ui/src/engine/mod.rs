@@ -11,7 +11,7 @@ use uuid::Uuid;
 use conrod_core::widget_ids;
 use wgpu::{Device, Queue};
 
-use crate::widgets::draggable_widget::DraggableWidget;
+// use crate::widgets::draggable_widget::DraggableWidget;
 
 pub struct UiEngine {
     _current_view_uuid: Uuid,
@@ -151,10 +151,10 @@ impl graphics::GuiTrait for DemoGui {
     fn init(
         &mut self,
         mut ui: conrod_core::Ui,
-        device: &Device,
-        queue: &mut Queue,
-        format: wgpu::TextureFormat,
-        image_map: &mut conrod_core::image::Map<conrod_wgpu::Image>,
+        _device: &Device,
+        _queue: &mut Queue,
+        _format: wgpu::TextureFormat,
+        _image_map: &mut conrod_core::image::Map<conrod_wgpu::Image>,
     ) -> conrod_core::Ui {
         // Load font from file
         let font_path = "fonts/NotoSans/NotoSans-Regular.ttf";
@@ -162,22 +162,22 @@ impl graphics::GuiTrait for DemoGui {
         ui.fonts.insert(font);
 
         // Load the Rust logo from our assets folder to use as an example image.F
-        let logo = "images/rust.png";
-        let rgba_logo_image = crate::assets::load_image(logo).to_rgba8();
+        // let logo = "images/rust.png";
+        // let rgba_logo_image = crate::assets::load_image(logo).to_rgba8();
 
-        // Create the GPU texture and upload the image data.
-        let (logo_w, logo_h) = rgba_logo_image.dimensions();
-        eprintln!("Logo dimensions: {} x {}", logo_w, logo_h);
-        let logo_tex = graphics::create_logo_texture(&device, queue, rgba_logo_image);
+        // // Create the GPU texture and upload the image data.
+        // let (logo_w, logo_h) = rgba_logo_image.dimensions();
+        // eprintln!("Logo dimensions: {} x {}", logo_w, logo_h);
+        // let logo_tex = graphics::create_logo_texture(&device, queue, rgba_logo_image);
 
-        let logo = conrod_wgpu::Image {
-            texture: logo_tex,
-            texture_format: format,
-            width: logo_w,
-            height: logo_h,
-        };
-        let rust_logo = image_map.insert(logo);
-        self.rust_logo = Some(rust_logo);
+        // let logo = conrod_wgpu::Image {
+        //     texture: logo_tex,
+        //     texture_format: format,
+        //     width: logo_w,
+        //     height: logo_h,
+        // };
+        // let rust_logo = image_map.insert(logo);
+        // self.rust_logo = Some(rust_logo);
 
         self.ids = Some(Ids::new(ui.widget_id_generator()));
 
@@ -316,20 +316,20 @@ impl graphics::GuiTrait for DemoGui {
             ///// Image /////
             /////////////////
 
-            if let Some(logo) = self.rust_logo {
-                widget::Text::new("Image")
-                    .down_from(ids.shapes_canvas, MARGIN)
-                    .align_middle_x_of(ids.canvas)
-                    .font_size(SUBTITLE_SIZE)
-                    .set(ids.image_title, ui);
+            // if let Some(logo) = self.rust_logo {
+            //     widget::Text::new("Image")
+            //         .down_from(ids.shapes_canvas, MARGIN)
+            //         .align_middle_x_of(ids.canvas)
+            //         .font_size(SUBTITLE_SIZE)
+            //         .set(ids.image_title, ui);
 
-                const LOGO_SIDE: conrod_core::Scalar = 144.0;
-                widget::Image::new(logo)
-                    .w_h(LOGO_SIDE, LOGO_SIDE)
-                    .down(60.0)
-                    .align_middle_x_of(ids.canvas)
-                    .set(ids.rust_logo, ui);
-            }
+            //     const LOGO_SIDE: conrod_core::Scalar = 144.0;
+            //     widget::Image::new(logo)
+            //         .w_h(LOGO_SIDE, LOGO_SIDE)
+            //         .down(60.0)
+            //         .align_middle_x_of(ids.canvas)
+            //         .set(ids.rust_logo, ui);
+            // }
 
             /////////////////////////////////
             ///// Button, XYPad, Toggle /////

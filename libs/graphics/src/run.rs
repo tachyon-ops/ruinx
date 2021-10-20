@@ -136,6 +136,11 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
             }
 
             match &event {
+                event::Event::Suspended => {
+                    log::info!("App suspended");
+                    app.set_state(None);
+                }
+
                 event::Event::WindowEvent { event, .. } => match event {
                     // Recreate swapchain when window is resized.
                     WindowEvent::Resized(physical_size) => app.resize(*physical_size),
@@ -307,7 +312,6 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
             match event {
                 Event::Resumed => {
                     log::info!("App resumed");
-                    std::thread::sleep(std::time::Duration::from_millis(250));
                     app.set_state(Some(block_on(State::new(&window, gui.clone()))));
                 }
                 _ => {}
