@@ -5,6 +5,7 @@ pub trait GuiTrait {
         device: &wgpu::Device,
         queue: &mut wgpu::Queue,
         texture_format: wgpu::TextureFormat,
+        image_map: &mut conrod_core::image::Map<conrod_wgpu::Image>,
     ) -> conrod_core::Ui;
     fn gui(&mut self, ui: &mut conrod_core::UiCell);
     fn theme(&mut self) -> conrod_core::Theme;

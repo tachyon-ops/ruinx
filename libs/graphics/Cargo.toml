@@ -6,22 +6,15 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# winit = {git = "https://github.com/nmpribeiro/winit.git", branch = "fix/ios"}
 app-events = {path = "../app-events"}
 futures = "0.3"
 log = "0.4"
-# wgpu = "0.10.2"
-wgpu = {git = "https://github.com/gfx-rs/wgpu.git"}
+wgpu = "0.10.0"
 winit = "0.25.0"
 
-# conrod = "0.62.1"
-# conrod_core = "0.74.0"
-# conrod_wgpu = "0.74.0"
-# conrod_winit = "0.74.0"
-conrod_core = {path = "../../github/conrod/conrod_core"}
-conrod_wgpu = {path = "../../github/conrod/backends/conrod_wgpu"}
-conrod_winit = {path = "../../github/conrod/backends/conrod_winit"}
+conrod_core = "0.75.0"
+conrod_wgpu = "0.75.0"
+conrod_winit = "0.75.0"
 image = "0.23"
 
 wasm-bindgen = "0.2.78"
-web-sys = "0.3.55"

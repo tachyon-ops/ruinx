@@ -1,6 +1,6 @@
 [package]
 edition = "2018"
-name = "rust_jsx_ui"
+name = "ruinx"
 resolver = "2"
 version = "0.1.0"
 

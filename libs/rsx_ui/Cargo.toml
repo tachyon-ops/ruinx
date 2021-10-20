@@ -20,10 +20,10 @@ find_folder = "0.3.0"
 image = "0.23.14"
 rand = "0.8.4"
 
-wgpu = {git = "https://github.com/gfx-rs/wgpu.git"}
+wgpu = "0.10.0"
 
-conrod_core = {path = "../../github/conrod/conrod_core"}
-conrod_derive = {path = "../../github/conrod/conrod_derive"}
-conrod_wgpu = {path = "../../github/conrod/backends/conrod_wgpu"}
+conrod_core = "0.75.0"
+conrod_derive = "0.75.0"
+conrod_wgpu = "0.75.0"
 
 rusttype = "0.9.2"

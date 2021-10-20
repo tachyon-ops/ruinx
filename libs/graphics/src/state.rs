@@ -46,11 +46,7 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(
-        window: &Window,
-        gui: Box<dyn GuiTrait>,
-        win_size: winit::dpi::LogicalSize<f64>,
-    ) -> Self {
+    pub async fn new(window: &Window, gui: Box<dyn GuiTrait>) -> Self {
         eprintln!("State::new");
         log::info!("----------------------------------------- Activating!");
 
@@ -65,30 +61,36 @@ impl State {
 
         log::info!("Surface");
         let surface = unsafe { instance.create_surface(window) };
+
+        // Select an adapter and gpu device.
+        let adapter_opts = wgpu::RequestAdapterOptions {
+            power_preference: wgpu::PowerPreference::default(),
+            compatible_surface: Some(&surface),
+        };
+
         log::info!("Adapter");
         let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                // Request an adapter which can render to our surface
-                compatible_surface: Some(&surface),
-            })
+            .request_adapter(&adapter_opts)
             .await
-            .expect("Failed to find an appropriate adapter");
+            .expect("Failed to find adapter");
+
+        let limits = wgpu::Limits::default().using_resolution(adapter.limits());
 
         log::info!("Device and Queue!");
+
+        let device_desc = wgpu::DeviceDescriptor {
+            label: Some("conrod_device_descriptor"),
+            features: wgpu::Features::empty(),
+            limits,
+        };
+
         // Create the logical device and command queue
         let (device, mut queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: Some("conrod_device_descriptor"),
-                    features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default().using_resolution(adapter.limits()),
-                },
-                None,
-            )
+            .request_device(&device_desc, None)
             .await
             .expect("Failed to create device");
 
+        // Create the swapchain.
         log::info!("Get swapchain format");
         let format = surface.get_preferred_format(&adapter).unwrap();
         let surface_config = wgpu::SurfaceConfiguration {
@@ -108,15 +110,16 @@ impl State {
             create_multisampled_framebuffer(&device, &surface_config, MSAA_SAMPLES);
 
         log::info!("Get image_map");
-        let image_map = conrod_core::image::Map::new();
+        let mut image_map = conrod_core::image::Map::new();
 
         eprint!("Generating UI\n");
         let mut gui = gui;
+        let win_size = crate::get_win_size(&window);
         let ui = conrod_core::UiBuilder::new([win_size.width, win_size.height])
             .theme(gui.theme())
             .build();
 
-        let ui = gui.init(ui, &device, &mut queue, format);
+        let ui = gui.init(ui, &device, &mut queue, format, &mut image_map);
 
         Self {
             size,
@@ -142,6 +145,7 @@ impl State {
         log::info!("Resizing: {} x {}", new_size.width, new_size.height);
 
         // Recreate the swap chain with the new size
+        self.size = new_size;
         self.surface_config.width = new_size.width;
         self.surface_config.height = new_size.height;
         self.surface.configure(&self.device, &self.surface_config);
@@ -152,9 +156,7 @@ impl State {
     }
 
     pub fn update(&mut self) {
-        //     if let Some(ui) = &mut self.ui {
-        //         ui.has_changed();
-        //     }
+        self.gui()
     }
 
     pub fn ui_handle_event(&mut self, event: conrod_core::event::Input) {
@@ -166,21 +168,21 @@ impl State {
         return self.ui.has_changed();
     }
 
-    pub fn render(&mut self, scale_factor: f64) -> Result<(), RenderError> {
+    pub fn render(&mut self, window: &Window) -> Result<(), RenderError> {
         let primitives = self.ui.draw();
 
         // The window frame that we will draw to.
         let frame = self.surface.get_current_frame().unwrap();
 
         // Begin encoding commands.
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("conrod_command_encoder"),
-            });
+        let cmd_encoder_desc = wgpu::CommandEncoderDescriptor {
+            label: Some("conrod_command_encoder"),
+        };
+        let mut encoder = self.device.create_command_encoder(&cmd_encoder_desc);
 
         // Feed the renderer primitives and update glyph cache texture if necessary.
-        // let scale_factor = window.scale_factor();
+        let scale_factor = window.scale_factor();
+
         let [win_w, win_h]: [f32; 2] = [self.size.width as f32, self.size.height as f32];
         let viewport = [0.0, 0.0, win_w, win_h];
         if let Some(cmd) = self
@@ -213,24 +215,19 @@ impl State {
                 },
             };
 
+            let render_pass_desc = wgpu::RenderPassDescriptor {
+                label: Some("conrod_render_pass_descriptor"),
+                color_attachments: &[color_attachment_desc],
+                depth_stencil_attachment: None,
+            };
             let render = self.renderer.render(&self.device, &self.image_map);
 
             {
-                log::info!("Will do render_pass");
-                let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: Some("conrod_render_pass_descriptor"),
-                    color_attachments: &[color_attachment_desc],
-                    depth_stencil_attachment: None,
-                });
+                let mut render_pass = encoder.begin_render_pass(&render_pass_desc);
                 let slot = 0;
-                log::info!("Will do render_pass set_vertex_buffer");
                 render_pass.set_vertex_buffer(slot, render.vertex_buffer.slice(..));
                 let instance_range = 0..1;
-                log::info!("Will iterate render.commands");
-                let mut i = 0;
                 for cmd in render.commands {
-                    log::info!(" > Render.command {}", i);
-
                     match cmd {
                         conrod_wgpu::RenderPassCommand::SetPipeline { pipeline } => {
                             render_pass.set_pipeline(pipeline);
@@ -244,21 +241,15 @@ impl State {
                         } => {
                             let [x, y] = top_left;
                             let [w, h] = dimensions;
-
-                            log::info!("Will do set_scissor_rect");
-
-                            // #[cfg(not(target_os = "android"))]
                             render_pass.set_scissor_rect(x, y, w, h);
                         }
                         conrod_wgpu::RenderPassCommand::Draw { vertex_range } => {
                             render_pass.draw(vertex_range, instance_range.clone());
                         }
                     }
-                    i += 1;
                 }
             }
         }
-        log::info!("Will submit queue");
         self.queue.submit(Some(encoder.finish()));
 
         Ok(())

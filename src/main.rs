@@ -1,6 +1,6 @@
-extern crate rust_jsx_ui;
+extern crate ruinx;
 
 fn main() {
     env_logger::init();
-    rust_jsx_ui::entry();
+    ruinx::entry();
 }
