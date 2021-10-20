@@ -1,7 +1,11 @@
 use conrod_core::Ui;
 use conrod_wgpu::Image;
 use wgpu::TextureView;
-use winit::{dpi::PhysicalSize, window::Window};
+use winit::{
+    dpi::PhysicalSize,
+    event_loop::EventLoop,
+    window::{Window, WindowBuilder},
+};
 
 use crate::{GuiTrait, RenderError};
 
@@ -46,11 +50,7 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(
-        window: &Window,
-        gui: Box<dyn GuiTrait>,
-        win_size: winit::dpi::LogicalSize<f64>,
-    ) -> Self {
+    pub async fn new(window: &Window, gui: Box<dyn GuiTrait>) -> Self {
         eprintln!("State::new");
         log::info!("----------------------------------------- Activating!");
 
@@ -118,6 +118,7 @@ impl State {
 
         eprint!("Generating UI\n");
         let mut gui = gui;
+        let win_size = crate::get_win_size(&window);
         let ui = conrod_core::UiBuilder::new([win_size.width, win_size.height])
             .theme(gui.theme())
             .build();
@@ -148,6 +149,7 @@ impl State {
         log::info!("Resizing: {} x {}", new_size.width, new_size.height);
 
         // Recreate the swap chain with the new size
+        self.size = new_size;
         self.surface_config.width = new_size.width;
         self.surface_config.height = new_size.height;
         self.surface.configure(&self.device, &self.surface_config);
@@ -172,7 +174,7 @@ impl State {
         return self.ui.has_changed();
     }
 
-    pub fn render(&mut self, scale_factor: f64) -> Result<(), RenderError> {
+    pub fn render(&mut self, window: &Window) -> Result<(), RenderError> {
         let primitives = self.ui.draw();
 
         // The window frame that we will draw to.
@@ -185,7 +187,8 @@ impl State {
         let mut encoder = self.device.create_command_encoder(&cmd_encoder_desc);
 
         // Feed the renderer primitives and update glyph cache texture if necessary.
-        // let scale_factor = window.scale_factor();
+        let scale_factor = window.scale_factor();
+
         let [win_w, win_h]: [f32; 2] = [self.size.width as f32, self.size.height as f32];
         let viewport = [0.0, 0.0, win_w, win_h];
         if let Some(cmd) = self

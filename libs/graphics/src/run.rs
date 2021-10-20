@@ -6,7 +6,7 @@ use winit::{
     dpi::{LogicalSize, PhysicalSize},
     event::{self, Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
+    window::{Window, WindowBuilder},
 };
 
 use crate::{
@@ -77,10 +77,10 @@ impl App {
         false
     }
 
-    fn render(&mut self, scale_factor: f64) -> Result<(), RenderError> {
+    fn render(&mut self, window: &Window) -> Result<(), RenderError> {
         self.engine.update();
         match &mut self.state {
-            Some(s) => s.render(scale_factor),
+            Some(s) => s.render(window),
             _ => Err(RenderError::MissplacedCall),
         }
     }
@@ -93,38 +93,28 @@ impl App {
     }
 }
 
-fn get_win_size(window: &winit::window::Window) -> LogicalSize<f64> {
-    let scale_factor = window.scale_factor();
-    let size = window.inner_size();
-    size.to_logical(scale_factor)
-}
-
 pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiTrait>) {
     log::info!("Inside RUN!");
     let event_loop = EventLoop::new();
+
     let window = WindowBuilder::new()
         .with_title(name)
         .build(&event_loop)
         .unwrap();
 
     #[cfg(not(target_os = "android"))]
-    let state = Some(block_on(State::new(
-        &window,
-        gui.clone(),
-        get_win_size(&window),
-    )));
+    let state = Some(block_on(State::new(&window, gui.clone())));
     #[cfg(target_os = "android")]
     let state: std::option::Option<State> = None;
 
     let mut app = App::new(engine);
     app.set_state(state);
 
-    log::info!("    --- EVENT LOOP ---");
-
     let sixteen_ms = std::time::Duration::from_millis(16);
     let mut next_update: Option<Instant> = None;
     let mut ui_update_needed = false;
 
+    log::info!("    --- EVENT LOOP ---");
     event_loop.run(move |event, _, control_flow| {
         // if app.get_mode() == AppMode::APP {
         //     // *control_flow = ControlFlow::Wait;
@@ -209,7 +199,7 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
 
             match &event {
                 event::Event::RedrawRequested(_) => {
-                    match app.render(window.scale_factor()) {
+                    match app.render(&window) {
                         _ => {}
                     };
                 }
@@ -321,11 +311,7 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
                 Event::Resumed => {
                     log::info!("App resumed");
                     std::thread::sleep(std::time::Duration::from_millis(250));
-                    app.set_state(Some(block_on(State::new(
-                        &window,
-                        gui.clone(),
-                        get_win_size(&window),
-                    ))));
+                    app.set_state(Some(block_on(State::new(&window, gui.clone()))));
                 }
                 _ => {}
             }
