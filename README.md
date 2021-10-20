@@ -32,9 +32,10 @@ cargo install cargo-lipo
 ### Build [Xcode project](https://github.com/yonaskolb/XcodeGen)
 
 ```bash
-cd ios
-./build.sh
+./ios.sh
 ```
+
+And answer the question "do you want a release? (yes/no)"
 
 ### Run example
 
