@@ -132,6 +132,25 @@ Head over to your android studio and run it. If you just want the apk, it will b
 
 Use android project to check logs.
 
+## TODO
+
+- [ ] - android - Fix android lost of surface on home & switching apps and going back to the app
+
+```log
+I/rust-app: graphics::state: Resizing: 1080 x 2312
+    wgpu_core::device: configuring surface with SurfaceConfiguration { usage: RENDER_ATTACHMENT, format: Rgba8UnormSrgb, width: 1080, height: 2312, present_mode: Fifo }
+E/vulkan: NATIVE_WINDOW_MAX_BUFFER_COUNT query failed: No such device (-19)
+E/rust-app: wgpu_hal::vulkan::adapter: get_physical_device_surface_capabilities: ERROR_SURFACE_LOST_KHR
+I/RustStdoutStderr: thread '<unnamed>' panicked at 'Error in Surface::configure: surface does not support the adapter's queue family', /Users/nmpribeiro/.cargo/git/checkouts/wgpu-53e70f8674b08dd4/9bc5908/wgpu/src/backend/direct.rs:197:9
+```
+
+- [ ] - android - Fix android scalling very different from desktop and iOS
+- [ ] - Touch screens - Create a functional Touch/Tap event
+- [ ] - Touch screens - Figure how to connect the Touch/Tap event with Conrad widgets
+- [ ] - iOS - fix `ld: in ../target/universal/release/libruinx.a(ruinx.ruinx.54ed59ac-cgu.9.rcgu.o), building for iOS Simulator, but linking in object file built for iOS, for architecture arm64` when trying to profile
+- [ ] - UI - generate Conrod UI from internal UI structure
+- [ ] - UI - generate internal UI structure (some DOM like) from RSX
+
 ## Resources
 
 ### Scripting languages
