@@ -8,8 +8,10 @@ pub fn entry() {
         },
     ));
     // set assets
-    utils::set_pc_assets_folder("assets");
-    rsx_ui::App::new("RuinX", "main");
+    // utils::set_pc_assets_folder("assets");
+    // rsx_ui::App::new("RuinX", "main");
+
+    wgpu_triangle::run_triangle();
 }
 
 /// Bindings entry point

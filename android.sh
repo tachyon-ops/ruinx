@@ -52,7 +52,7 @@ done
 #NOTE: Dont't forget to modify these vars to your setup
 PROJ_MAIN=./android/app/src/main
 LIBS_DIR=$PROJ_MAIN/jniLibs
-LIB_NAME=rust_jsx_app
+LIB_NAME=ruinx
 
 #prepare folders...
 rm -rf $LIBS_DIR

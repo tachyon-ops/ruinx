@@ -1,0 +1,30 @@
+[package]
+edition = "2021"
+name = "wgpu_triangle"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+wgpu = "0.11.0"
+winit = "0.25"
+pollster = "0.2"
+env_logger = "0.9"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+async-executor = "1.0"
+
+# [target.'cfg(target_arch = "wasm32")'.dependencies]
+# js-sys = "0.3.50" 
+# wasm-bindgen = "0.2.76" # remember to change version in wiki as well
+# wasm-bindgen-futures = "0.4.23" 
+# # enable parking_lot's wasm-bindgen feature so that it, in turn, enables that of crate `instant`
+# parking_lot = {version = "0.11", features = ["wasm-bindgen"]}
+
+# [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+# console_error_panic_hook = "0.1.6"
+# console_log = "0.1.2"
+# # We need the Location feature in the framework examples
+# rand = {version = "0.7", features = ["wasm-bindgen"]}
+# web-sys = {version = "0.3.53", features = ["Location"]}
+# winit = {version = "0.25", features = ["web-sys"]}
