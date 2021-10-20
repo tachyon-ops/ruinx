@@ -24,11 +24,14 @@ pub struct State {
 
 impl State {
     pub fn new(window: &Window) -> Self {
-        let backends = wgpu::Backends::PRIMARY;
-        let instance = wgpu::Instance::new(backends);
+        let size = window.inner_size();
+
+        // let backends = wgpu::Backends::PRIMARY;
+        // let instance = wgpu::Instance::new(backends);
+
+        let instance = wgpu::Instance::new(wgpu::Backends::all());
 
         // Create the window and surface.
-        let size = window.inner_size();
 
         #[cfg(not(feature = "gl"))]
         {}
@@ -38,6 +41,7 @@ impl State {
         let adapter_opts = wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::default(),
             compatible_surface: Some(&surface),
+            force_fallback_adapter: true,
         };
 
         let adapter = futures::executor::block_on(instance.request_adapter(&adapter_opts)).unwrap();
