@@ -5,11 +5,13 @@ A cool experiment to create a Rust UI using JSX
 ## Clone
 
 `git clone https://github.com/nmpribeiro/ruinx.git`
-`git submodule update --init --recursive`
 
-or
+## Build and run
 
-`git clone --recursive https://github.com/nmpribeiro/ruinx.git`
+[cargo run] command also builds :)
+
+1. `cargo build`
+2. `cargo run`
 
 ## iOS BUILD
 
