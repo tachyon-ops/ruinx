@@ -1,5 +1,10 @@
+#[macro_use]
+extern crate conrod_core;
+extern crate rand;
+
 mod all_winit_wgpu;
 mod assets;
+mod conrod_example;
 mod state;
 
 pub const MSAA_SAMPLES: u32 = 4;

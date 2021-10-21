@@ -4,9 +4,7 @@ use conrod_wgpu::{Image, Renderer};
 use wgpu::{Device, Queue, Surface, SurfaceConfiguration, TextureView};
 use winit::{dpi::PhysicalSize, window::Window};
 
-use crate::{
-    create_logo_texture, create_multisampled_framebuffer, LOGO_TEXTURE_FORMAT, MSAA_SAMPLES,
-};
+use crate::{create_multisampled_framebuffer, MSAA_SAMPLES};
 
 pub struct State {
     ui: Ui,
@@ -18,41 +16,39 @@ pub struct State {
     multisampled_framebuffer: TextureView,
     queue: Queue,
     surface_config: SurfaceConfiguration,
-    ids: conrod_example_shared::Ids,
-    app: conrod_example_shared::DemoApp,
+    // ids: conrod_example_shared::Ids,
+    ids: crate::conrod_example::Ids,
+    // app: conrod_example_shared::DemoApp,
+    app: crate::conrod_example::DemoApp,
 }
 
 impl State {
     pub fn new(window: &Window) -> Self {
         let size = window.inner_size();
-
-        // let backends = wgpu::Backends::PRIMARY;
-        // let instance = wgpu::Instance::new(backends);
-
         let instance = wgpu::Instance::new(wgpu::Backends::all());
-
-        // Create the window and surface.
-
-        #[cfg(not(feature = "gl"))]
-        {}
         let surface = unsafe { instance.create_surface(window) };
+        let adapter =
+            futures::executor::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::default(),
+                // force_fallback_adapter: false,
+                // Request an adapter which can render to our surface
+                compatible_surface: Some(&surface),
+            }))
+            .expect("Failed to find an appropriate adapter");
 
-        // Select an adapter and gpu device.
-        let adapter_opts = wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::default(),
-            compatible_surface: Some(&surface),
-            force_fallback_adapter: true,
-        };
-
-        let adapter = futures::executor::block_on(instance.request_adapter(&adapter_opts)).unwrap();
-        let limits = wgpu::Limits::default().using_resolution(adapter.limits());
-        let device_desc = wgpu::DeviceDescriptor {
-            label: Some("conrod_device_descriptor"),
-            features: wgpu::Features::empty(),
-            limits,
-        };
-        let device_request = adapter.request_device(&device_desc, None);
-        let (device, mut queue) = futures::executor::block_on(device_request).unwrap();
+        // Create the logical device and command queue
+        let (device, mut queue) = futures::executor::block_on(adapter.request_device(
+            &wgpu::DeviceDescriptor {
+                label: Some("conrod_device_descriptor"),
+                features: wgpu::Features::empty(),
+                // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the swapchain.
+                limits:
+                    // wgpu::Limits::downlevel_webgl2_defaults().using_resolution(adapter.limits()),
+                    wgpu::Limits::default().using_resolution(adapter.limits()),
+            },
+            None,
+        ))
+        .expect("Failed to create device");
 
         // Create the swapchain.
         let format = surface.get_preferred_format(&adapter).unwrap();
@@ -76,23 +72,24 @@ impl State {
         let mut ui = conrod_core::UiBuilder::new([WIN_W as f64, WIN_H as f64])
             .theme(conrod_example_shared::theme())
             .build();
-        let ids = conrod_example_shared::Ids::new(ui.widget_id_generator());
+        // let ids = conrod_example_shared::Ids::new(ui.widget_id_generator());
+        let ids = crate::conrod_example::Ids::new(ui.widget_id_generator());
 
         // Load font from file
         let font_path = "fonts/NotoSans/NotoSans-Regular.ttf";
         let font = crate::assets::load_font(font_path);
         ui.fonts.insert(font);
 
-        // Load the Rust logo from our assets folder to use as an example image.F
+        // // Load the Rust logo from our assets folder to use as an example image.F
         let logo = "images/rust.png";
         let rgba_logo_image = crate::assets::load_image(logo).to_rgba8();
 
         // Create the GPU texture and upload the image data.
         let (logo_w, logo_h) = rgba_logo_image.dimensions();
-        let logo_tex = create_logo_texture(&device, &mut queue, rgba_logo_image);
+        let logo_tex = crate::create_logo_texture(&device, &mut queue, rgba_logo_image);
         let logo = conrod_wgpu::Image {
             texture: logo_tex,
-            texture_format: LOGO_TEXTURE_FORMAT,
+            texture_format: crate::LOGO_TEXTURE_FORMAT,
             width: logo_w,
             height: logo_h,
         };
@@ -100,7 +97,8 @@ impl State {
         let rust_logo = image_map.insert(logo);
 
         // Demonstration app state that we'll control with our conrod GUI.
-        let app = conrod_example_shared::DemoApp::new(rust_logo);
+        let app = crate::conrod_example::DemoApp::new(rust_logo);
+        // let app = crate::conrod_example::DemoApp::new();
 
         Self {
             ui,
@@ -125,7 +123,8 @@ impl State {
         let primitives = self.ui.draw();
 
         // The window frame that we will draw to.
-        let frame = self.surface.get_current_texture().unwrap();
+        // let frame = self.surface.get_current_texture().unwrap();
+        let frame = self.surface.get_current_frame().unwrap();
 
         // Begin encoding commands.
         let cmd_encoder_desc = wgpu::CommandEncoderDescriptor {
@@ -147,6 +146,7 @@ impl State {
 
         // Create a view for the surface's texture.
         let frame_tex_view = frame
+            .output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
@@ -216,7 +216,8 @@ impl State {
 
     pub fn init_gui(&mut self) {
         // Instantiate a GUI demonstrating every widget type provided by conrod.
-        conrod_example_shared::gui(&mut self.ui.set_widgets(), &self.ids, &mut self.app);
+        // conrod_example_shared::gui(&mut self.ui.set_widgets(), &self.ids, &mut self.app);
+        crate::conrod_example::gui(&mut self.ui.set_widgets(), &self.ids, &mut self.app);
     }
 
     pub fn has_changed(&mut self) -> bool {

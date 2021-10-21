@@ -6,4 +6,9 @@
 /libs/rsx_ui/target
 /libs/rsx_loader/target
 /libs/graphics/target
+/libs/conrod_test/target/
+/libs/wgpu_triangle/target/
 android/app/src/main/assets
+
+/github/conrod/target
+/github/wgpu/target
