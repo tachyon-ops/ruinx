@@ -130,14 +130,8 @@ impl State {
             present_mode: wgpu::PresentMode::Mailbox,
         };
 
-        #[cfg(not(feature = "gl"))]
-        eprintln!("Surface NOT configured!");
-
-        #[cfg(feature = "gl")]
-        {
-            eprintln!("Surface configure!");
-            surface.configure(&device, &config);
-        }
+        eprintln!("Surface configure!");
+        surface.configure(&device, &config);
 
         eprintln!("Setup DONE!");
         Self {
