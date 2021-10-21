@@ -40,7 +40,7 @@ name = "android.hardware.vulkan.level"
 version = "1"
 
 [[package.metadata.android.feature]]
-name = "android.hardware.vulkan.version"
+name = "android.hardware.vulkan.version" 
 version = "4198400" # v1.1 = 0x00401000
 
 # Docs: https://lib.rs/crates/cargo-quad-apk

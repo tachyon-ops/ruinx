@@ -17,8 +17,14 @@ struct State {
 impl State {
     async fn new(window: &Window) -> State {
         let size = window.inner_size();
+
+        eprintln!("Get instance");
         let instance = wgpu::Instance::new(wgpu::Backends::all());
+
+        eprintln!("Get surface");
         let surface = unsafe { instance.create_surface(window) };
+
+        eprintln!("Get adapter");
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
@@ -29,6 +35,14 @@ impl State {
             .await
             .expect("Failed to find an appropriate adapter");
 
+        // wgpu::Limits::default().using_resolution(adapter.limits());
+        eprintln!("using my custom LIMITS!");
+        // eprintln!(
+        //     "wgpu::Limits::downlevel_webgl2_defaults()
+        // .using_resolution(adapter.limits())"
+        // );
+
+        eprintln!("Get device and queue");
         // Create the logical device and command queue
         let (device, queue) = adapter
             .request_device(
@@ -36,28 +50,60 @@ impl State {
                     label: None,
                     features: wgpu::Features::empty(),
                     // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the swapchain.
-                    limits: wgpu::Limits::downlevel_webgl2_defaults()
-                        .using_resolution(adapter.limits()),
+                    limits: wgpu::Limits {
+                        max_texture_dimension_1d: 2048,
+                        max_texture_dimension_2d: 2048,
+                        max_texture_dimension_3d: 256,
+                        max_texture_array_layers: 256,
+                        max_bind_groups: 4,
+                        max_dynamic_uniform_buffers_per_pipeline_layout: 8,
+                        // max_dynamic_storage_buffers_per_pipeline_layout: 4,
+                        max_sampled_textures_per_shader_stage: 16,
+                        max_samplers_per_shader_stage: 16,
+                        // max_storage_buffers_per_shader_stage: 4,
+                        // max_storage_textures_per_shader_stage: 4,
+                        max_uniform_buffers_per_shader_stage: 12,
+                        max_uniform_buffer_binding_size: 16384,
+                        // max_storage_buffer_binding_size: 128 << 20,
+                        max_vertex_buffers: 8,
+                        max_vertex_attributes: 16,
+                        // max_vertex_buffer_array_stride: 2048,
+                        max_push_constant_size: 0,
+                        min_uniform_buffer_offset_alignment: 256,
+                        min_storage_buffer_offset_alignment: 256,
+                        // These?
+                        max_storage_buffers_per_shader_stage: 0,
+                        max_storage_textures_per_shader_stage: 0,
+                        max_dynamic_storage_buffers_per_pipeline_layout: 0,
+                        max_storage_buffer_binding_size: 0,
+                        max_vertex_buffer_array_stride: 255,
+                    },
+                    // limits: wgpu::Limits::downlevel_webgl2_defaults()
+                    //     .using_resolution(adapter.limits()),
                 },
                 None,
             )
             .await
             .expect("Failed to create device");
 
+        eprintln!("Get shader");
         // Load the shaders from disk
         let shader = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
             label: None,
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
         });
 
+        eprintln!("Get pipeline layout");
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[],
             push_constant_ranges: &[],
         });
 
+        eprintln!("Get swap chain format");
         let swapchain_format = surface.get_preferred_format(&adapter).unwrap();
 
+        eprintln!("Get render pipeline");
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,
             layout: Some(&pipeline_layout),
@@ -84,8 +130,16 @@ impl State {
             present_mode: wgpu::PresentMode::Mailbox,
         };
 
-        surface.configure(&device, &config);
+        #[cfg(not(feature = "gl"))]
+        eprintln!("Surface NOT configured!");
 
+        #[cfg(feature = "gl")]
+        {
+            eprintln!("Surface configure!");
+            surface.configure(&device, &config);
+        }
+
+        eprintln!("Setup DONE!");
         Self {
             config,
             surface,
@@ -181,6 +235,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 pub fn run_triangle() {
     let event_loop = EventLoop::new();
     let window = winit::window::Window::new(&event_loop).unwrap();
+
     #[cfg(not(target_arch = "wasm32"))]
     {
         // Temporarily avoid srgb formats for the swapchain on the web
