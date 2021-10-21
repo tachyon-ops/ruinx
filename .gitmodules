@@ -1,3 +1,6 @@
 [submodule "github/conrod"]
 	path = github/conrod
 	url = https://github.com/nmpribeiro/conrod
+[submodule "github/wgpu"]
+	path = github/wgpu
+	url = git@github.com:nmpribeiro/wgpu.git
