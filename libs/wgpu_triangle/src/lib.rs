@@ -97,12 +97,11 @@ impl State {
 }
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
-    let mut option_state: Option<State> = None;
-
-    #[cfg(not(target_os = "android"))]
-    {
-        option_state = Some(pollster::block_on(State::new(&window)));
-    }
+    let mut option_state: Option<State> = if cfg!(target_os = "android") {
+        None
+    } else {
+        Some(pollster::block_on(State::new(&window)))
+    };
 
     event_loop.run(move |event, _, control_flow| {
         // Have the closure take ownership of the resources.

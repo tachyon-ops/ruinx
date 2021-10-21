@@ -11,8 +11,8 @@ pub fn entry() {
     utils::set_pc_assets_folder("assets");
 
     // rsx_ui::App::new("RuinX", "main");
-    wgpu_triangle::run_triangle();
-    // conrod_test::conrod_test_run();
+    // wgpu_triangle::run_triangle();
+    conrod_test::conrod_test_run();
 }
 
 /// Bindings entry point
@@ -27,7 +27,7 @@ pub extern "C" fn main_rs() {
 #[cfg(target_os = "android")]
 #[cfg_attr(
     target_os = "android",
-    ndk_glue::main(backtrace = "on", logger(level = "debug", tag = "rust-app"))
+    ndk_glue::main(backtrace = "full", logger(level = "debug", tag = "rust-app"))
 )]
 fn android_entry() {
     entry();
