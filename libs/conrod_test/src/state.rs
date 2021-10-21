@@ -125,7 +125,7 @@ impl State {
         let primitives = self.ui.draw();
 
         // The window frame that we will draw to.
-        let frame = self.surface.get_current_frame().unwrap();
+        let frame = self.surface.get_current_texture().unwrap();
 
         // Begin encoding commands.
         let cmd_encoder_desc = wgpu::CommandEncoderDescriptor {
@@ -147,7 +147,6 @@ impl State {
 
         // Create a view for the surface's texture.
         let frame_tex_view = frame
-            .output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
