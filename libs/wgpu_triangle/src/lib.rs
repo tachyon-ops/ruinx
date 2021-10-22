@@ -16,10 +16,16 @@ struct State {
 
 impl State {
     async fn new(window: &Window) -> State {
+        #[cfg(feature = "gl")]
+        eprintln!("FEATURE 'gl': YES");
+
+        #[cfg(not(feature = "gl"))]
+        eprintln!("FEATURE 'gl': NO");
+
         let size = window.inner_size();
 
         eprintln!("Get instance");
-        let instance = wgpu::Instance::new(wgpu::Backends::all());
+        let instance = wgpu::Instance::new(wgpu::Backends::GL);
 
         eprintln!("Get surface");
         let surface = unsafe { instance.create_surface(window) };
