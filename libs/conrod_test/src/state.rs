@@ -30,7 +30,7 @@ impl State {
         let adapter =
             futures::executor::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
-                // force_fallback_adapter: false,
+                force_fallback_adapter: false,
                 // Request an adapter which can render to our surface
                 compatible_surface: Some(&surface),
             }))
@@ -123,8 +123,7 @@ impl State {
         let primitives = self.ui.draw();
 
         // The window frame that we will draw to.
-        // let frame = self.surface.get_current_texture().unwrap();
-        let frame = self.surface.get_current_frame().unwrap();
+        let surface_texture = self.surface.get_current_texture().unwrap();
 
         // Begin encoding commands.
         let cmd_encoder_desc = wgpu::CommandEncoderDescriptor {
@@ -145,8 +144,8 @@ impl State {
         }
 
         // Create a view for the surface's texture.
-        let frame_tex_view = frame
-            .output
+
+        let surface_view = surface_texture
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
@@ -154,8 +153,8 @@ impl State {
         {
             // This condition allows to more easily tweak the MSAA_SAMPLES constant.
             let (attachment, resolve_target) = match MSAA_SAMPLES {
-                1 => (&frame_tex_view, None),
-                _ => (&self.multisampled_framebuffer, Some(&frame_tex_view)),
+                1 => (&surface_view, None),
+                _ => (&self.multisampled_framebuffer, Some(&surface_view)),
             };
             let color_attachment_desc = wgpu::RenderPassColorAttachment {
                 view: attachment,
@@ -203,6 +202,7 @@ impl State {
         }
 
         self.queue.submit(Some(encoder.finish()));
+        surface_texture.present();
     }
 
     pub fn resize(&mut self, new_size: &PhysicalSize<u32>) {
