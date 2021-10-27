@@ -1,20 +1,26 @@
 [package]
-edition = "2018"
-name = "graphics"
-version = "0.1.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = '2018'
+name = 'graphics'
+version = '0.1.0'
 
 [dependencies]
-app-events = {path = "../app-events"}
-futures = "0.3"
-log = "0.4"
-wgpu = "0.10.0"
-winit = "0.25.0"
+futures = '0.3'
+log = '0.4'
+winit = '0.25.0'
+image = '0.23'
+wasm-bindgen = '0.2.78'
 
-conrod_core = "0.75.0"
-conrod_wgpu = "0.75.0"
-conrod_winit = "0.75.0"
-image = "0.23"
+[dependencies.conrod_core]
+path = '../../github/conrod/conrod_core'
 
-wasm-bindgen = "0.2.78"
+[dependencies.conrod_wgpu]
+path = '../../github/conrod/backends/conrod_wgpu'
+
+[dependencies.conrod_winit]
+path = '../../github/conrod/backends/conrod_winit'
+
+[dependencies.wgpu]
+path = '../../github/wgpu/wgpu'
+
+[dependencies.app-events]
+path = '../app-events'
