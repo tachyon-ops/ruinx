@@ -1,28 +1,28 @@
 [package]
-edition = "2021"
-name = "conrod_test"
-# resolver = "2"
-version = "0.1.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = '2021'
+name = 'conrod_test'
+version = '0.1.0'
 
 [dependencies]
-futures = "0.3"
-image = "0.23"
-# wgpu = "0.11.0"
-winit = "0.25"
+futures = '0.3'
+image = '0.23'
+winit = '0.25'
+rand = '0.8.1'
 
-# wgpu = {git = "https://github.com/nmpribeiro/wgpu", branch = "feature/conrod_test"}
-# conrod_core = {path = "../../github/conrod/conrod_core"}
-# conrod_example_shared = {path = "../../github/conrod/backends/conrod_example_shared"}
-# conrod_wgpu = {path = "../../github/conrod/backends/conrod_wgpu"}
-# conrod_winit = {path = "../../github/conrod/backends/conrod_winit"}
+[dependencies.wgpu]
+git = 'https://github.com/nmpribeiro/wgpu'
 
-conrod_core = "0.75.0"
-conrod_example_shared = "0.75.0"
-conrod_wgpu = "0.75.0"
-conrod_winit = "0.75.0"
-wgpu = "0.10"
+[dependencies.conrod_core]
+path = '../../github/conrod/conrod_core'
 
-rand = "0.8.1"
-utils = {path = "../utils"}
+[dependencies.conrod_example_shared]
+path = '../../github/conrod/backends/conrod_example_shared'
+
+[dependencies.conrod_wgpu]
+path = '../../github/conrod/backends/conrod_wgpu'
+
+[dependencies.conrod_winit]
+path = '../../github/conrod/backends/conrod_winit'
+
+[dependencies.utils]
+path = '../utils'

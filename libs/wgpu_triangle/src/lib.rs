@@ -25,6 +25,9 @@ impl State {
         let size = window.inner_size();
 
         eprintln!("Get instance");
+        #[cfg(not(target_os = "android"))]
+        let instance = wgpu::Instance::new(wgpu::Backends::all());
+        #[cfg(target_os = "android")]
         let instance = wgpu::Instance::new(wgpu::Backends::GL);
 
         eprintln!("Get surface");
