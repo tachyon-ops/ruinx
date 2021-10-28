@@ -12,7 +12,6 @@ fi
 echo "Generating XCode project"
 xcodegen generate
 
-echo -n $'Do you wish a release? (yes/no)\n'
-read isRelease
+
 echo "Building rust"
-./build_rust_deps.sh "$isRelease"
+./build_rust_deps.sh "$1"

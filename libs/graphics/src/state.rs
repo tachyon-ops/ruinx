@@ -1,11 +1,26 @@
 use conrod_core::Ui;
 use conrod_wgpu::Image;
 use wgpu::TextureView;
-use winit::{dpi::PhysicalSize, window::Window};
+use winit::{
+    dpi::{LogicalSize, PhysicalSize},
+    window::Window,
+};
 
 use crate::{GuiTrait, RenderError};
 
 const MSAA_SAMPLES: u32 = 4;
+
+pub fn get_win_size(window: &Window) -> (LogicalSize<f64>, f64) {
+    // #[cfg(not(target_os = "android"))]
+    let scale_factor = window.scale_factor();
+    // #[cfg(target_os = "android")]
+    // let scale_factor = 3.0;
+
+    log::info!("Scale factor: {}", scale_factor);
+    let size = window.inner_size();
+    log::info!("Size: {} x {}", size.width, size.height);
+    (size.to_logical(scale_factor), scale_factor)
+}
 
 fn create_multisampled_framebuffer(
     device: &wgpu::Device,
@@ -33,6 +48,7 @@ fn create_multisampled_framebuffer(
 
 pub struct State {
     pub size: PhysicalSize<u32>,
+    scale_factor: f64,
     surface: wgpu::Surface,
     // adapter: wgpu::Adapter,
     device: wgpu::Device,
@@ -166,7 +182,7 @@ impl State {
 
         eprint!("Generating UI\n");
         let mut gui = gui;
-        let win_size = crate::get_win_size(&window);
+        let (win_size, scale_factor) = get_win_size(&window);
         let ui = conrod_core::UiBuilder::new([win_size.width, win_size.height])
             .theme(gui.theme())
             .build();
@@ -175,6 +191,7 @@ impl State {
 
         Self {
             size,
+            scale_factor,
             surface,
             device,
             queue,
@@ -220,7 +237,8 @@ impl State {
         return self.ui.has_changed();
     }
 
-    pub fn render(&mut self, window: &Window) -> Result<(), RenderError> {
+    pub fn render(&mut self) -> Result<(), RenderError> {
+        // Feed the renderer primitives and update glyph cache texture if necessary.
         let primitives = self.ui.draw();
 
         // The window frame that we will draw to.
@@ -232,14 +250,13 @@ impl State {
         };
         let mut encoder = self.device.create_command_encoder(&cmd_encoder_desc);
 
-        // Feed the renderer primitives and update glyph cache texture if necessary.
-        let scale_factor = window.scale_factor();
-
         let [win_w, win_h]: [f32; 2] = [self.size.width as f32, self.size.height as f32];
         let viewport = [0.0, 0.0, win_w, win_h];
+        eprintln!("viewport: {:?}", viewport);
+
         if let Some(cmd) = self
             .renderer
-            .fill(&self.image_map, viewport, scale_factor, primitives)
+            .fill(&self.image_map, viewport, self.scale_factor, primitives)
             .unwrap()
         {
             cmd.load_buffer_and_encode(&self.device, &mut encoder);
@@ -292,6 +309,7 @@ impl State {
                         } => {
                             let [x, y] = top_left;
                             let [w, h] = dimensions;
+                            eprintln!("x = {}, y = {}, w = {}, h = {}", x, y, w, h);
                             render_pass.set_scissor_rect(x, y, w, h);
                         }
                         conrod_wgpu::RenderPassCommand::Draw { vertex_range } => {

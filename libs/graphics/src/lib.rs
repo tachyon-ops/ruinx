@@ -10,14 +10,6 @@ pub use mode::AppMode;
 pub use run::event_loop;
 pub use state::State;
 
-pub fn get_win_size(window: &winit::window::Window) -> winit::dpi::LogicalSize<f64> {
-    let scale_factor = window.scale_factor();
-    log::info!("Scale factor: {}", scale_factor);
-    let size = window.inner_size();
-    log::info!("Size: {} x {}", size.width, size.height);
-    size.to_logical(scale_factor)
-}
-
 const LOGO_TEXTURE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8UnormSrgb;
 
 pub fn create_logo_texture(

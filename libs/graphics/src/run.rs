@@ -75,10 +75,10 @@ impl App {
         false
     }
 
-    fn render(&mut self, window: &Window) -> Result<(), RenderError> {
+    fn render(&mut self) -> Result<(), RenderError> {
         self.engine.update();
         match &mut self.state {
-            Some(s) => s.render(window),
+            Some(s) => s.render(),
             _ => Err(RenderError::MissplacedCall),
         }
     }
@@ -145,7 +145,11 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
                 event::Event::WindowEvent { event, .. } => match event {
                     // Recreate swapchain when window is resized.
                     WindowEvent::Resized(physical_size) => app.resize(*physical_size),
-                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                    WindowEvent::ScaleFactorChanged {
+                        new_inner_size,
+                        scale_factor,
+                    } => {
+                        log::info!("Scale Factor Changed: {}", scale_factor);
                         app.resize(**new_inner_size)
                     }
 
@@ -202,7 +206,7 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
 
             match &event {
                 event::Event::RedrawRequested(_) => {
-                    match app.render(&window) {
+                    match app.render() {
                         _ => {}
                     };
                 }
