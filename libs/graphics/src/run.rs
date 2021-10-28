@@ -48,6 +48,7 @@ impl App {
     }
 
     fn resize(&mut self, new_size: PhysicalSize<u32>) {
+        eprintln!("Resizing");
         match &mut self.state {
             Some(s) => s.resize(new_size),
             _ => {}
@@ -56,9 +57,9 @@ impl App {
     }
 
     fn set_state(&mut self, state: Option<State>) {
-        eprintln!("Set state");
-        if let Some(s) = state {
-            self.state = Some(s);
+        match state {
+            Some(s) => self.state = Some(s),
+            None => self.state = None,
         }
     }
 
@@ -313,6 +314,7 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
                 Event::Resumed => {
                     log::info!("App resumed");
                     app.set_state(Some(block_on(State::new(&window, gui.clone()))));
+                    app.update();
                 }
                 _ => {}
             }

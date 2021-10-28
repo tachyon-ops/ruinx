@@ -33,7 +33,12 @@ launch_mode = "singleTask"
 min_sdk_version = 26
 target_sdk_version = 29
 # build_targets = ["aarch64-linux-android"]
-build_targets = ["armv7-linux-androideabi", "aarch64-linux-android", "i686-linux-android", "x86_64-linux-android"]
+build_targets = [
+  # "armv7-linux-androideabi",
+  "aarch64-linux-android",
+  # "i686-linux-android",
+  # "x86_64-linux-android"
+]
 
 [[package.metadata.android.feature]]
 name = "android.hardware.vulkan.level"

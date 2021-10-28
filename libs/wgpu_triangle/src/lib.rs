@@ -16,12 +16,6 @@ struct State {
 
 impl State {
     async fn new(window: &Window) -> State {
-        #[cfg(feature = "gl")]
-        eprintln!("FEATURE 'gl': YES");
-
-        #[cfg(not(feature = "gl"))]
-        eprintln!("FEATURE 'gl': NO");
-
         let size = window.inner_size();
 
         eprintln!("Get instance");
@@ -50,6 +44,36 @@ impl State {
         //     "wgpu::Limits::downlevel_webgl2_defaults()
         // .using_resolution(adapter.limits())"
         // );
+        // limits: wgpu::Limits::downlevel_webgl2_defaults()
+                    //     .using_resolution(adapter.limits()),
+        let limits = wgpu::Limits {
+          max_texture_dimension_1d: 2048,
+          max_texture_dimension_2d: 2048,
+          max_texture_dimension_3d: 256,
+          max_texture_array_layers: 256,
+          max_bind_groups: 4,
+          max_dynamic_uniform_buffers_per_pipeline_layout: 8,
+          // max_dynamic_storage_buffers_per_pipeline_layout: 4,
+          max_sampled_textures_per_shader_stage: 16,
+          max_samplers_per_shader_stage: 16,
+          // max_storage_buffers_per_shader_stage: 4,
+          // max_storage_textures_per_shader_stage: 4,
+          max_uniform_buffers_per_shader_stage: 12,
+          max_uniform_buffer_binding_size: 16384,
+          // max_storage_buffer_binding_size: 128 << 20,
+          max_vertex_buffers: 8,
+          max_vertex_attributes: 16,
+          // max_vertex_buffer_array_stride: 2048,
+          max_push_constant_size: 0,
+          min_uniform_buffer_offset_alignment: 256,
+          min_storage_buffer_offset_alignment: 256,
+          // These?
+          max_storage_buffers_per_shader_stage: 0,
+          max_storage_textures_per_shader_stage: 0,
+          max_dynamic_storage_buffers_per_pipeline_layout: 0,
+          max_storage_buffer_binding_size: 0,
+          max_vertex_buffer_array_stride: 255,
+        };
 
         eprintln!("Get device and queue");
         // Create the logical device and command queue
@@ -59,36 +83,7 @@ impl State {
                     label: None,
                     features: wgpu::Features::empty(),
                     // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the swapchain.
-                    limits: wgpu::Limits {
-                        max_texture_dimension_1d: 2048,
-                        max_texture_dimension_2d: 2048,
-                        max_texture_dimension_3d: 256,
-                        max_texture_array_layers: 256,
-                        max_bind_groups: 4,
-                        max_dynamic_uniform_buffers_per_pipeline_layout: 8,
-                        // max_dynamic_storage_buffers_per_pipeline_layout: 4,
-                        max_sampled_textures_per_shader_stage: 16,
-                        max_samplers_per_shader_stage: 16,
-                        // max_storage_buffers_per_shader_stage: 4,
-                        // max_storage_textures_per_shader_stage: 4,
-                        max_uniform_buffers_per_shader_stage: 12,
-                        max_uniform_buffer_binding_size: 16384,
-                        // max_storage_buffer_binding_size: 128 << 20,
-                        max_vertex_buffers: 8,
-                        max_vertex_attributes: 16,
-                        // max_vertex_buffer_array_stride: 2048,
-                        max_push_constant_size: 0,
-                        min_uniform_buffer_offset_alignment: 256,
-                        min_storage_buffer_offset_alignment: 256,
-                        // These?
-                        max_storage_buffers_per_shader_stage: 0,
-                        max_storage_textures_per_shader_stage: 0,
-                        max_dynamic_storage_buffers_per_pipeline_layout: 0,
-                        max_storage_buffer_binding_size: 0,
-                        max_vertex_buffer_array_stride: 255,
-                    },
-                    // limits: wgpu::Limits::downlevel_webgl2_defaults()
-                    //     .using_resolution(adapter.limits()),
+                    limits
                 },
                 None,
             )

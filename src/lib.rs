@@ -27,7 +27,7 @@ pub extern "C" fn main_rs() {
 #[cfg(target_os = "android")]
 #[cfg_attr(
     target_os = "android",
-    ndk_glue::main(backtrace = "full", logger(level = "debug", tag = "rust-app"))
+    ndk_glue::main(backtrace = "on", logger(level = "debug", tag = "rust-app"))
 )]
 fn android_entry() {
     entry();

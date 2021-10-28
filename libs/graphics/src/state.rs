@@ -45,8 +45,28 @@ pub struct State {
     ui: Ui,
 }
 
+fn wait_for_native_window() {
+    log::info!("Will now wait for native window");
+    #[cfg(target_arch = "android")]
+    {
+        log::info!("Waiting for NativeScreen");
+        loop {
+            match ndk_glue::native_window().as_ref() {
+                Some(_) => {
+                    log::info!("NativeScreen Found:{:?}", ndk_glue::native_window());
+                    break;
+                }
+                None => (),
+            }
+        }
+    }
+    log::info!("Proceeding after native window found");
+}
+
 impl State {
     pub async fn new(window: &Window, gui: Box<dyn GuiTrait>) -> Self {
+        wait_for_native_window();
+
         eprintln!("State::new");
         log::info!("----------------------------------------- Activating!");
 
@@ -57,7 +77,10 @@ impl State {
         #[cfg(not(target_os = "android"))]
         let instance = wgpu::Instance::new(wgpu::Backends::all());
         #[cfg(target_os = "android")]
-        let instance = wgpu::Instance::new(wgpu::Backends::GL);
+        let instance = {
+            wgpu::Instance::new(wgpu::Backends::all())
+            // wgpu::Instance::new(wgpu::Backends::GL)
+        };
 
         log::info!("Surface");
         let surface = unsafe { instance.create_surface(window) };
@@ -77,8 +100,8 @@ impl State {
 
         // let limits = wgpu::Limits::default().using_resolution(adapter.limits());
         let limits = wgpu::Limits {
-            max_texture_dimension_1d: 2048,
-            max_texture_dimension_2d: 2048,
+            max_texture_dimension_1d: 4096,
+            max_texture_dimension_2d: 4096,
             max_texture_dimension_3d: 256,
             max_texture_array_layers: 256,
             max_bind_groups: 4,
