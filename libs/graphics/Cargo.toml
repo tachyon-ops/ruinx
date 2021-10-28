@@ -8,7 +8,8 @@ futures = '0.3'
 log = '0.4'
 winit = '0.25.0'
 image = '0.23'
-wasm-bindgen = '0.2.78'
+# wasm-bindgen = '0.2.78'
+wgpu = "0.11.0"
 
 [dependencies.conrod_core]
 path = '../../github/conrod/conrod_core'
@@ -19,8 +20,7 @@ path = '../../github/conrod/backends/conrod_wgpu'
 [dependencies.conrod_winit]
 path = '../../github/conrod/backends/conrod_winit'
 
-[dependencies.wgpu]
-path = '../../github/wgpu/wgpu'
+
 
 [dependencies.app-events]
 path = '../app-events'

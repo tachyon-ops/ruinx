@@ -8,9 +8,7 @@ futures = '0.3'
 image = '0.23'
 winit = '0.25'
 rand = '0.8.1'
-
-[dependencies.wgpu]
-git = 'https://github.com/nmpribeiro/wgpu'
+wgpu = '0.11.0'
 
 [dependencies.conrod_core]
 path = '../../github/conrod/conrod_core'

@@ -66,6 +66,7 @@ impl State {
         let adapter_opts = wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::default(),
             compatible_surface: Some(&surface),
+            force_fallback_adapter: false,
         };
 
         log::info!("Adapter");
@@ -74,7 +75,35 @@ impl State {
             .await
             .expect("Failed to find adapter");
 
-        let limits = wgpu::Limits::default().using_resolution(adapter.limits());
+        // let limits = wgpu::Limits::default().using_resolution(adapter.limits());
+        let limits = wgpu::Limits {
+            max_texture_dimension_1d: 2048,
+            max_texture_dimension_2d: 2048,
+            max_texture_dimension_3d: 256,
+            max_texture_array_layers: 256,
+            max_bind_groups: 4,
+            max_dynamic_uniform_buffers_per_pipeline_layout: 8,
+            // max_dynamic_storage_buffers_per_pipeline_layout: 4,
+            max_sampled_textures_per_shader_stage: 16,
+            max_samplers_per_shader_stage: 16,
+            // max_storage_buffers_per_shader_stage: 4,
+            // max_storage_textures_per_shader_stage: 4,
+            max_uniform_buffers_per_shader_stage: 12,
+            max_uniform_buffer_binding_size: 16384,
+            // max_storage_buffer_binding_size: 128 << 20,
+            max_vertex_buffers: 8,
+            max_vertex_attributes: 16,
+            // max_vertex_buffer_array_stride: 2048,
+            max_push_constant_size: 0,
+            min_uniform_buffer_offset_alignment: 256,
+            min_storage_buffer_offset_alignment: 256,
+            // These?
+            max_storage_buffers_per_shader_stage: 0,
+            max_storage_textures_per_shader_stage: 0,
+            max_dynamic_storage_buffers_per_pipeline_layout: 0,
+            max_storage_buffer_binding_size: 0,
+            max_vertex_buffer_array_stride: 255,
+        };
 
         log::info!("Device and Queue!");
 
@@ -172,7 +201,7 @@ impl State {
         let primitives = self.ui.draw();
 
         // The window frame that we will draw to.
-        let frame = self.surface.get_current_frame().unwrap();
+        let surface_texture = self.surface.get_current_texture().unwrap();
 
         // Begin encoding commands.
         let cmd_encoder_desc = wgpu::CommandEncoderDescriptor {
@@ -194,8 +223,7 @@ impl State {
         }
 
         // Create a view for the surface's texture.
-        let frame_tex_view = frame
-            .output
+        let surface_view = surface_texture
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
@@ -203,8 +231,8 @@ impl State {
         {
             // This condition allows to more easily tweak the MSAA_SAMPLES constant.
             let (attachment, resolve_target) = match MSAA_SAMPLES {
-                1 => (&frame_tex_view, None),
-                _ => (&self.multisampled_framebuffer, Some(&frame_tex_view)),
+                1 => (&surface_view, None),
+                _ => (&self.multisampled_framebuffer, Some(&surface_view)),
             };
             let color_attachment_desc = wgpu::RenderPassColorAttachment {
                 view: attachment,
@@ -251,6 +279,7 @@ impl State {
             }
         }
         self.queue.submit(Some(encoder.finish()));
+        surface_texture.present();
 
         Ok(())
     }

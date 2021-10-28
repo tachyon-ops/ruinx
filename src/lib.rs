@@ -10,9 +10,9 @@ pub fn entry() {
     // set assets
     utils::set_pc_assets_folder("assets");
 
-    // rsx_ui::App::new("RuinX", "main");
+    rsx_ui::App::new("RuinX", "main");
     // wgpu_triangle::run_triangle();
-    conrod_test::conrod_test_run();
+    // conrod_test::conrod_test_run();
 }
 
 /// Bindings entry point

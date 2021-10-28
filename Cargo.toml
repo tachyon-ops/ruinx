@@ -16,10 +16,10 @@ sentry = "0.23.0"
 
 # our libs
 # graphics = {path = "./libs/graphics"}
-# rsx_ui = {path = "./libs/rsx_ui"}
+rsx_ui = {path = "./libs/rsx_ui"}
 utils = {path = "./libs/utils"}
 # wgpu_triangle = {path = "./libs/wgpu_triangle"}
-conrod_test = {path = "./libs/conrod_test"}
+# conrod_test = {path = "./libs/conrod_test"}
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.10.1"
