@@ -32,14 +32,14 @@ path = '../rsx_loader'
 [dependencies.utils]
 path = '../utils'
 
-[dependencies.conrod_core]
-path = '../../github/conrod/conrod_core'
+# [dependencies.conrod_core]
+# path = '../../github/conrod/conrod_core'
 
-[dependencies.conrod_wgpu]
-path = '../../github/conrod/backends/conrod_wgpu'
+# [dependencies.conrod_wgpu]
+# path = '../../github/conrod/backends/conrod_wgpu'
 
-[dependencies.conrod_winit]
-path = '../../github/conrod/backends/conrod_winit'
+# [dependencies.conrod_winit]
+# path = '../../github/conrod/backends/conrod_winit'
 
-[dependencies.conrod_derive]
-path = '../../github/conrod/conrod_derive'
+# [dependencies.conrod_derive]
+# path = '../../github/conrod/conrod_derive'

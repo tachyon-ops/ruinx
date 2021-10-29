@@ -1,6 +1,0 @@
-[submodule "github/conrod"]
-	path = github/conrod
-	url = git@github.com:nmpribeiro/conrod.git
-[submodule "github/wgpu"]
-	path = github/wgpu
-	url = git@github.com:nmpribeiro/wgpu.git
