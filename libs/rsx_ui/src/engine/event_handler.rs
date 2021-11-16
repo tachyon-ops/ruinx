@@ -15,7 +15,7 @@ pub trait EventHandler {
     fn handle_event(
         &mut self,
         // current_widget_id: u32,
-        event: app_events::event::Event,
+        event: graphics::events::Event,
         // cache: &mut WidgetCache,
     );
 

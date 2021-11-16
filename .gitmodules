@@ -1,0 +1,3 @@
+[submodule "github/iced"]
+	path = github/iced
+	url = git@github.com:iced-rs/iced.git

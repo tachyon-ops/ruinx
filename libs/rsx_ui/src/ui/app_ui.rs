@@ -16,7 +16,7 @@ impl EventHandler for UiExample {
     // fn handle_event(&mut self, current_widget_id: u32, event: Event, cache: &mut WidgetCache) {
     //     eprintln!("Event received: {:?}", event);
     // }
-    fn handle_event(&mut self, _event: app_events::event::Event) {
+    fn handle_event(&mut self, _event: graphics::events::Event) {
         // eprintln!("Event received: {:?}", event);
     }
 

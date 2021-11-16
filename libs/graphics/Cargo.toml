@@ -2,15 +2,20 @@
 edition = '2018'
 name = 'graphics'
 version = '0.1.0'
+resolver="2"
 
 [dependencies]
+# env_logger = '0.9'
 futures = '0.3'
 log = '0.4'
-winit = '0.25.0'
-image = '0.23'
-wgpu = '0.11.0'
-iced_wgpu = '0.4.0'
-iced_winit = '0.3.0'
+# image = '0.23'
+
+[dependencies.iced_winit]
+path = '../../github/iced/winit'
+
+[dependencies.iced_wgpu]
+path = '../../github/iced/wgpu'
+features = ['spirv']
 
 # [dependencies.conrod_core]
 # path = '../../github/conrod/conrod_core'
@@ -21,9 +26,6 @@ iced_winit = '0.3.0'
 # [dependencies.conrod_winit]
 # path = '../../github/conrod/backends/conrod_winit'
 
-[dependencies.conrod_winit.ndk-glue]
+[target."cfg(target_os = \"android\")".dependencies.ndk-glue]
 version = '0.3.0'
 features = ['logger']
-
-[dependencies.app-events]
-path = '../app-events'
