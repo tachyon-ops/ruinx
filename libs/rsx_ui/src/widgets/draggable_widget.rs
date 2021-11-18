@@ -13,7 +13,7 @@ use std;
 
 pub struct MoveEvent([f64; 2]);
 impl MoveEvent {
-    fn new() -> Self {
+    fn _new() -> Self {
         Self([0.0, 0.0])
     }
 

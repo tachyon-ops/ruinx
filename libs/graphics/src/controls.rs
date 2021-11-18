@@ -26,7 +26,7 @@ pub enum Message {
 impl Controls {
     pub fn new() -> Controls {
         Controls {
-            background_color: Color::BLACK,
+            background_color: Color::from_rgb(0.5, 0.0, 0.0),
             sliders: Default::default(),
         }
     }

@@ -1,15 +1,11 @@
-use crate::{
-    controls::Controls,
-    iced_program_trait::{IcedProgramTrait, RuinXMessage},
-    RenderError,
-};
+use crate::{controls::Controls, RenderError};
 
 use iced_wgpu::{
     wgpu::TextureFormat,
     wgpu::{self, Device, Queue, Surface},
     Backend, Renderer, Settings, Viewport,
 };
-use iced_winit::{conversion, program, winit, Clipboard, Debug, Program, Size};
+use iced_winit::{conversion, program, winit, Clipboard, Debug, Size};
 
 use iced_winit::futures::task::SpawnExt;
 
@@ -217,16 +213,6 @@ impl State {
                 }
 
                 // And then iced on top
-                // let mouse_interaction = self.renderer.backend_mut().draw(
-                //     &mut self.device,
-                //     &mut self.staging_belt,
-                //     &mut encoder,
-                //     &view,
-                //     &self.viewport,
-                //     self.state.primitive(),
-                //     &self.debug.overlay(),
-                // );
-
                 let renderer = &mut self.renderer;
                 let mut device = &mut self.device;
                 let mut staging_belt = &mut self.staging_belt;

@@ -14,7 +14,7 @@ use winit::{
     window::WindowBuilder,
 };
 
-use crate::{engine::RenderError, iced_program_trait::IcedProgramTrait, State};
+use crate::{engine::RenderError, State};
 
 struct App {
     // engine: Box<dyn Engine>,
@@ -29,7 +29,7 @@ impl App {
     }
 
     fn resize(&mut self, viewport: Viewport) {
-        eprintln!("Resizing");
+        // eprintln!("Resizing");
         match &mut self.state {
             Some(s) => s.resize(viewport),
             _ => {}
