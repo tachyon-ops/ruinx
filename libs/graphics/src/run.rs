@@ -1,8 +1,8 @@
 use futures::executor::block_on;
 
-use iced_wgpu::{wgpu::util::StagingBelt, Viewport};
+use iced_wgpu::Viewport;
 use iced_winit::{
-    futures::{self, executor::LocalPool},
+    futures,
     winit::{self, event::ModifiersState, window::Window},
     Size,
 };
@@ -14,20 +14,18 @@ use winit::{
     window::WindowBuilder,
 };
 
-use crate::{engine::RenderError, Engine, GuiTrait, State};
+use crate::{engine::RenderError, iced_program_trait::IcedProgramTrait, State};
 
 struct App {
-    engine: Box<dyn Engine>,
+    // engine: Box<dyn Engine>,
     state: Option<State>,
 }
 
 impl App {
-    fn new(mut engine: Box<dyn Engine>) -> App {
-        engine.setup();
-        App {
-            engine,
-            state: None,
-        }
+    // fn new(mut engine: Box<dyn Engine>) -> App {
+    fn new() -> App {
+        // engine.setup();
+        App { state: None }
     }
 
     fn resize(&mut self, viewport: Viewport) {
@@ -51,7 +49,7 @@ impl App {
     // }
 
     fn render(&mut self, window: &Window) -> Result<(), RenderError> {
-        self.engine.update();
+        // self.engine.update();
         match &mut self.state {
             Some(s) => s.render(window),
             _ => Err(RenderError::MissplacedCall),
@@ -87,7 +85,8 @@ impl App {
     }
 }
 
-pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiTrait>) {
+// pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiTrait>) {
+pub fn event_loop(name: &'static str) {
     log::info!("Inside RUN!");
     let event_loop = EventLoop::new();
 
@@ -97,14 +96,17 @@ pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiT
         .unwrap();
 
     #[cfg(not(target_os = "android"))]
-    let state = Some(block_on(State::new(&window, gui.clone())));
+    let state = Some(block_on(State::new(&window)));
+    // let state = Some(block_on(State::new(&window, gui.clone())));
+
     #[cfg(target_os = "android")]
     let state: std::option::Option<State> = None;
 
-    let mut modifiers = ModifiersState::default();
-
-    let mut app = App::new(engine);
+    // let mut app = App::new(engine);
+    let mut app = App::new();
     app.set_state(state);
+
+    let mut modifiers = ModifiersState::default();
 
     log::info!("    --- EVENT LOOP ---");
     event_loop.run(move |event, _, control_flow| {

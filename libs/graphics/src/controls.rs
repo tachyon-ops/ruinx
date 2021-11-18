@@ -1,8 +1,17 @@
 use iced_wgpu::Renderer;
-use iced_winit::{
-    slider, Alignment, Color, Column, Command, Element, Length, Program, Row,
-    Slider, Text,
-};
+use iced_winit::widget::slider::{self, Slider};
+use iced_winit::widget::{Column, Row, Text};
+use iced_winit::{Alignment, Color, Command, Element, Length, Program};
+
+// pub trait ControlsTrait: Sized {
+//     fn new() -> Self;
+//     fn background_color(&mut self) -> Color;
+// }
+
+// pub trait ProgramTrait<R: iced_native::Renderer, M: std::fmt::Debug + Send>: Sized {
+//     fn update(&mut self, message: M) -> Command<M>;
+//     fn view(&mut self) -> Element<'_, M, R>;
+// }
 
 pub struct Controls {
     background_color: Color,
@@ -88,10 +97,7 @@ impl Program for Controls {
                         Column::new()
                             .padding(10)
                             .spacing(10)
-                            .push(
-                                Text::new("Background color")
-                                    .color(Color::WHITE),
-                            )
+                            .push(Text::new("Background color").color(Color::WHITE))
                             .push(sliders)
                             .push(
                                 Text::new(format!("{:?}", background_color))

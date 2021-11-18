@@ -1232,6 +1232,7 @@ name = "graphics"
 version = "0.1.0"
 dependencies = [
  "futures 0.3.17",
+ "iced_native",
  "iced_wgpu",
  "iced_winit",
  "log",
@@ -1490,6 +1491,7 @@ version = "0.4.0"
 dependencies = [
  "iced_core",
  "iced_futures",
+ "iced_style",
  "num-traits 0.2.14",
  "twox-hash",
  "unicode-segmentation",

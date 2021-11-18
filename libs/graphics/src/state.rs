@@ -1,11 +1,15 @@
-use crate::{controls::Controls, GuiTrait, RenderError};
+use crate::{
+    controls::Controls,
+    iced_program_trait::{IcedProgramTrait, RuinXMessage},
+    RenderError,
+};
 
 use iced_wgpu::{
     wgpu::TextureFormat,
     wgpu::{self, Device, Queue, Surface},
     Backend, Renderer, Settings, Viewport,
 };
-use iced_winit::{conversion, program, winit, Clipboard, Debug, Size};
+use iced_winit::{conversion, program, winit, Clipboard, Debug, Program, Size};
 
 use iced_winit::futures::task::SpawnExt;
 
@@ -46,7 +50,7 @@ pub struct State {
 }
 
 impl State {
-    pub async fn new(window: &Window, gui: Box<dyn GuiTrait>) -> Self {
+    pub async fn new(window: &Window) -> Self {
         wait_for_native_window();
 
         let physical_size = window.inner_size();
@@ -118,16 +122,11 @@ impl State {
 
         // Initialize scene and GUI controls
         // let scene = Scene::new(&mut device);
-        let controls = Controls::new();
+        let program = Controls::new();
         let mut debug = Debug::new();
 
-        let state = program::State::new(
-            controls,
-            viewport.logical_size(),
-            conversion::cursor_position(cursor_position, viewport.scale_factor()),
-            &mut renderer,
-            &mut debug,
-        );
+        let state =
+            program::State::new(program, viewport.logical_size(), &mut renderer, &mut debug);
 
         // Initialize staging belt and local pool
         let staging_belt = iced_wgpu::wgpu::util::StagingBelt::new(5 * 1024);
@@ -218,15 +217,32 @@ impl State {
                 }
 
                 // And then iced on top
-                let mouse_interaction = self.renderer.backend_mut().draw(
-                    &mut self.device,
-                    &mut self.staging_belt,
-                    &mut encoder,
-                    &view,
-                    &self.viewport,
-                    self.state.primitive(),
-                    &self.debug.overlay(),
-                );
+                // let mouse_interaction = self.renderer.backend_mut().draw(
+                //     &mut self.device,
+                //     &mut self.staging_belt,
+                //     &mut encoder,
+                //     &view,
+                //     &self.viewport,
+                //     self.state.primitive(),
+                //     &self.debug.overlay(),
+                // );
+
+                let renderer = &mut self.renderer;
+                let mut device = &mut self.device;
+                let mut staging_belt = &mut self.staging_belt;
+                let viewport = &mut self.viewport;
+                let debug = &mut self.debug;
+                renderer.with_primitives(|backend, primitive| {
+                    backend.present(
+                        &mut device,
+                        &mut staging_belt,
+                        &mut encoder,
+                        &view,
+                        primitive,
+                        &viewport,
+                        &debug.overlay(),
+                    );
+                });
 
                 // Then we submit the work
                 self.staging_belt.finish();
@@ -234,8 +250,9 @@ impl State {
                 frame.present();
 
                 // Update the mouse cursor
-                window
-                    .set_cursor_icon(iced_winit::conversion::mouse_interaction(mouse_interaction));
+                window.set_cursor_icon(iced_winit::conversion::mouse_interaction(
+                    self.state.mouse_interaction(),
+                ));
 
                 // And recall staging buffers
                 self.local_pool

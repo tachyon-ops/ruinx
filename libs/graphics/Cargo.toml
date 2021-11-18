@@ -13,6 +13,9 @@ log = '0.4'
 [dependencies.iced_winit]
 path = '../../github/iced/winit'
 
+[dependencies.iced_native]
+path = '../../github/iced/native'
+
 [dependencies.iced_wgpu]
 path = '../../github/iced/wgpu'
 features = ['spirv']

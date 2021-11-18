@@ -59,14 +59,16 @@ impl UiEngine {
         let size = (100, 100); // (screen_width() as u32, screen_height() as u32);
         let dom = UiDom::new(size);
 
-        let engine = Self {
+        // let engine = Self {
+        let _ = Self {
             _current_view_uuid: dom.root.uuid,
             dom, // WidgetCache::new(window.size().0, window.size().1),
             ui,
             app_mode,
         };
 
-        graphics::event_loop(name, Box::new(engine), Box::new(DemoGui::new()));
+        // graphics::event_loop(name, Box::new(engine), Box::new(DemoGui::new()));
+        graphics::event_loop(name);
     }
 }
 

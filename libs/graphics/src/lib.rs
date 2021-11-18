@@ -1,7 +1,10 @@
+#![feature(trivial_bounds)]
+
 mod controls;
 mod engine;
 pub mod events;
 mod gui_trait;
+pub mod iced_program_trait;
 mod mode;
 mod run;
 mod state;
