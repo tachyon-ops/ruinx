@@ -20,7 +20,6 @@ struct App<A>
 where
     A: Application + 'static,
 {
-    // engine: Box<dyn Engine>,
     state: Option<State<A>>,
 }
 
@@ -28,19 +27,15 @@ impl<A> App<A>
 where
     A: Application + 'static,
 {
-    // fn new(mut engine: Box<dyn Engine>) -> App {
     fn new() -> App<A> {
-        // engine.setup();
         App { state: None }
     }
 
     fn resize(&mut self, viewport: Viewport) {
-        // eprintln!("Resizing");
         match &mut self.state {
             Some(s) => s.resize(viewport),
             _ => {}
         }
-        // self.engine.resize(new_size);
     }
 
     fn set_state(&mut self, state: Option<State<A>>) {
@@ -49,10 +44,6 @@ where
             None => self.state = None,
         }
     }
-
-    // fn has_state(&mut self) -> bool {
-    //     self.state.is_some()
-    // }
 
     fn render(&mut self, window: &Window) -> Result<(), RenderError> {
         // self.engine.update();
@@ -106,12 +97,10 @@ where
 
     #[cfg(not(target_os = "android"))]
     let state = Some(block_on(State::new(&window, application)));
-    // let state = Some(block_on(State::new(&window, gui.clone())));
 
     #[cfg(target_os = "android")]
     let state: std::option::Option<State> = None;
 
-    // let mut app = App::new(engine);
     let mut app = App::new();
     app.set_state(state);
 
