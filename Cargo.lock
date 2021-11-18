@@ -1232,6 +1232,7 @@ name = "graphics"
 version = "0.1.0"
 dependencies = [
  "futures 0.3.17",
+ "iced_graphics",
  "iced_native",
  "iced_wgpu",
  "iced_winit",
@@ -2913,6 +2914,8 @@ dependencies = [
  "find_folder",
  "futures 0.3.17",
  "graphics",
+ "iced_wgpu",
+ "iced_winit",
  "image",
  "rand 0.8.4",
  "rsx-parser",

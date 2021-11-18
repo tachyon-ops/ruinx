@@ -27,6 +27,12 @@ path = '../rsx_loader'
 [dependencies.utils]
 path = '../utils'
 
+[dependencies.iced_winit]
+path = '../../github/iced/winit'
+
+[dependencies.iced_wgpu]
+path = '../../github/iced/wgpu'
+
 # [dependencies.conrod_core]
 # path = '../../github/conrod/conrod_core'
 

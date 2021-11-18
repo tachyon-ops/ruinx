@@ -1,4 +1,4 @@
-use crate::{controls::Controls, RenderError};
+use crate::{Application, RenderError};
 
 use iced_wgpu::{
     wgpu::TextureFormat,
@@ -29,11 +29,14 @@ fn wait_for_native_window() {
     log::info!("Proceeding after native window found");
 }
 
-pub struct State {
+pub struct State<A>
+where
+    A: Application + 'static,
+{
     cursor_position: PhysicalPosition<f64>,
     viewport: Viewport,
     resized: bool,
-    state: program::State<Controls>,
+    state: program::State<A>,
     renderer: Renderer,
     clipboard: Clipboard,
     debug: Debug,
@@ -45,8 +48,11 @@ pub struct State {
     local_pool: futures::executor::LocalPool,
 }
 
-impl State {
-    pub async fn new(window: &Window) -> Self {
+impl<A> State<A>
+where
+    A: Application + 'static,
+{
+    pub async fn new(window: &Window, application: A) -> Self {
         wait_for_native_window();
 
         let physical_size = window.inner_size();
@@ -118,11 +124,15 @@ impl State {
 
         // Initialize scene and GUI controls
         // let scene = Scene::new(&mut device);
-        let program = Controls::new();
+        // let program = Controls::new();
         let mut debug = Debug::new();
 
-        let state =
-            program::State::new(program, viewport.logical_size(), &mut renderer, &mut debug);
+        let state = program::State::new(
+            application,
+            viewport.logical_size(),
+            &mut renderer,
+            &mut debug,
+        );
 
         // Initialize staging belt and local pool
         let staging_belt = iced_wgpu::wgpu::util::StagingBelt::new(5 * 1024);

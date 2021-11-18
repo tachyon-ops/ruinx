@@ -14,16 +14,22 @@ use winit::{
     window::WindowBuilder,
 };
 
-use crate::{engine::RenderError, State};
+use crate::{engine::RenderError, Application, State};
 
-struct App {
+struct App<A>
+where
+    A: Application + 'static,
+{
     // engine: Box<dyn Engine>,
-    state: Option<State>,
+    state: Option<State<A>>,
 }
 
-impl App {
+impl<A> App<A>
+where
+    A: Application + 'static,
+{
     // fn new(mut engine: Box<dyn Engine>) -> App {
-    fn new() -> App {
+    fn new() -> App<A> {
         // engine.setup();
         App { state: None }
     }
@@ -37,7 +43,7 @@ impl App {
         // self.engine.resize(new_size);
     }
 
-    fn set_state(&mut self, state: Option<State>) {
+    fn set_state(&mut self, state: Option<State<A>>) {
         match state {
             Some(s) => self.state = Some(s),
             None => self.state = None,
@@ -86,7 +92,10 @@ impl App {
 }
 
 // pub fn event_loop(name: &'static str, engine: Box<dyn Engine>, gui: Box<dyn GuiTrait>) {
-pub fn event_loop(name: &'static str) {
+pub fn event_loop<A>(name: &'static str, application: A)
+where
+    A: Application + 'static,
+{
     log::info!("Inside RUN!");
     let event_loop = EventLoop::new();
 
@@ -96,7 +105,7 @@ pub fn event_loop(name: &'static str) {
         .unwrap();
 
     #[cfg(not(target_os = "android"))]
-    let state = Some(block_on(State::new(&window)));
+    let state = Some(block_on(State::new(&window, application)));
     // let state = Some(block_on(State::new(&window, gui.clone())));
 
     #[cfg(target_os = "android")]

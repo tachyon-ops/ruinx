@@ -13,6 +13,9 @@ log = '0.4'
 [dependencies.iced_winit]
 path = '../../github/iced/winit'
 
+[dependencies.iced_graphics]
+path = '../../github/iced/graphics'
+
 [dependencies.iced_native]
 path = '../../github/iced/native'
 

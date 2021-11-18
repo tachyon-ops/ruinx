@@ -1,3 +1,4 @@
+mod controls;
 pub mod dom;
 mod event_handler;
 // pub mod widgets;
@@ -67,8 +68,9 @@ impl UiEngine {
             app_mode,
         };
 
+        let application = controls::Controls::new();
         // graphics::event_loop(name, Box::new(engine), Box::new(DemoGui::new()));
-        graphics::event_loop(name);
+        graphics::event_loop(name, application);
     }
 }
 

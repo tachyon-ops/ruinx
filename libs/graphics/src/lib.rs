@@ -1,14 +1,14 @@
 #![feature(trivial_bounds)]
 
-mod controls;
+mod application;
 mod engine;
 pub mod events;
 mod gui_trait;
-pub mod iced_program_trait;
 mod mode;
 mod run;
 mod state;
 
+pub use application::Application;
 pub use engine::{Engine, RenderError};
 pub use gui_trait::GuiTrait;
 pub use mode::AppMode;
