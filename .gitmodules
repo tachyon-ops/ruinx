@@ -1,3 +1,6 @@
 [submodule "github/iced"]
 	path = github/iced
 	url = git@github.com:iced-rs/iced.git
+[submodule "github/wgpu"]
+	path = github/wgpu
+	url = git@github.com:nmpribeiro/wgpu.git
