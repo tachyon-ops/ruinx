@@ -42,8 +42,8 @@ impl Program for Controls {
         let [r, g, b] = &mut self.sliders;
         let background_color = self.background_color;
 
-        let sliders = Row::new()
-            .width(Length::Units(500))
+        let sliders = Column::new()
+            .width(Length::Units(200))
             .spacing(20)
             .push(
                 Slider::new(r, 0.0..=1.0, background_color.r, move |r| {
@@ -76,11 +76,11 @@ impl Program for Controls {
         Row::new()
             .width(Length::Fill)
             .height(Length::Fill)
-            .align_items(Alignment::End)
+            .align_items(Alignment::Start)
             .push(
                 Column::new()
                     .width(Length::Fill)
-                    .align_items(Alignment::End)
+                    .align_items(Alignment::Start)
                     .push(
                         Column::new()
                             .padding(10)

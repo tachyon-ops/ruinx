@@ -4,3 +4,6 @@
 [submodule "github/wgpu"]
 	path = github/wgpu
 	url = git@github.com:nmpribeiro/wgpu.git
+[submodule "github/wgpu_glyph"]
+	path = github/wgpu_glyph
+	url = git@github.com:nmpribeiro/wgpu_glyph.git

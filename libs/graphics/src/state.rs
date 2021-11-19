@@ -68,6 +68,7 @@ where
         log::info!("Instance");
         #[cfg(not(target_os = "android"))]
         let instance = wgpu::Instance::new(wgpu::Backends::all());
+
         #[cfg(target_os = "android")]
         let instance = {
             wgpu::Instance::new(wgpu::Backends::all())
