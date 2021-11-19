@@ -1950,7 +1950,8 @@ checksum = "16cf681a23b4d0a43fc35024c176437f9dcd818db34e0f42ab456a0ee5ad497b"
 [[package]]
 name = "naga"
 version = "0.7.1"
-source = "git+https://github.com/gfx-rs/naga?rev=eda078d#eda078d736a906b4267e4803db6b32e3162aac30"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eda66d09f712e1f0a6ab436137da4fac312f78301f6d4ac7cb8bfe96e988734f"
 dependencies = [
  "bit-set",
  "bitflags",
@@ -4150,6 +4151,8 @@ checksum = "d8b77fdfd5a253be4ab714e4ffa3c49caf146b4de743e97510c0656cf90f1e8e"
 [[package]]
 name = "wgpu"
 version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1577ecc4f6992b9e965878ac594efb24eed2bdf089c11f45b3d1c5f216e2e30"
 dependencies = [
  "arrayvec",
  "js-sys",
@@ -4168,12 +4171,13 @@ dependencies = [
 
 [[package]]
 name = "wgpu-core"
-version = "0.11.0"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3bdcbfa4885b32c2b1feb2faeb8b6a76065b752b8f08751b82f994e937687f46"
 dependencies = [
  "arrayvec",
  "bitflags",
  "cfg_aliases",
- "codespan-reporting",
  "copyless",
  "fxhash",
  "log",
@@ -4189,7 +4193,9 @@ dependencies = [
 
 [[package]]
 name = "wgpu-hal"
-version = "0.11.2"
+version = "0.11.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e493835d9edb153d5c8a9d8d016e1811dbe32ddb707a110be1453c7b051d3ec"
 dependencies = [
  "arrayvec",
  "ash",
@@ -4226,6 +4232,8 @@ dependencies = [
 [[package]]
 name = "wgpu-types"
 version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e15e44ba88ec415466e18e91881319e7c9e96cb905dc623305168aea65b85ccc"
 dependencies = [
  "bitflags",
 ]
@@ -4233,6 +4241,8 @@ dependencies = [
 [[package]]
 name = "wgpu_glyph"
 version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c78d49f4d168b245882ce000ee94fc67e744b33760c0119b0dbf8cb3caf20de5"
 dependencies = [
  "bytemuck",
  "glyph_brush",
