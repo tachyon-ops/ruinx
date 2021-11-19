@@ -1,11 +1,16 @@
 use crate::{Application, RenderError};
 
+use iced_graphics::Color;
 use iced_wgpu::{
     wgpu::TextureFormat,
     wgpu::{self, Device, Queue, Surface},
     Backend, Renderer, Settings, Viewport,
 };
-use iced_winit::{conversion, program, winit, Clipboard, Debug, Size};
+use iced_winit::{
+    conversion, program,
+    winit::{self, dpi::PhysicalSize},
+    Clipboard, Debug, Size,
+};
 
 use iced_winit::futures::task::SpawnExt;
 
@@ -33,8 +38,8 @@ pub struct State<A>
 where
     A: Application + 'static,
 {
+    pub size: PhysicalSize<u32>,
     cursor_position: PhysicalPosition<f64>,
-    viewport: Viewport,
     resized: bool,
     state: program::State<A>,
     renderer: Renderer,
@@ -55,11 +60,11 @@ where
     pub async fn new(window: &Window, application: A) -> Self {
         wait_for_native_window();
 
-        let physical_size = window.inner_size();
-        let viewport = Viewport::with_physical_size(
-            Size::new(physical_size.width, physical_size.height),
-            window.scale_factor(),
-        );
+        let size = window.inner_size();
+        log::info!("Size: {} x {}", size.width, size.height);
+
+        let viewport =
+            Viewport::with_physical_size(Size::new(size.width, size.height), window.scale_factor());
         let cursor_position = PhysicalPosition::new(-1.0, -1.0);
 
         let clipboard = Clipboard::connect(&window);
@@ -140,8 +145,8 @@ where
         let local_pool = futures::executor::LocalPool::new();
 
         Self {
+            size,
             cursor_position,
-            viewport,
             resized: false,
             state,
             renderer,
@@ -156,23 +161,21 @@ where
         }
     }
 
-    pub fn resize(&mut self, viewport: Viewport) {
+    pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         // log::info!("Resizing: {} x {}", new_size.width, new_size.height);
-        self.viewport = viewport;
+        self.size = new_size;
         self.resized = true;
     }
 
     pub fn render(&mut self, window: &Window) -> Result<(), RenderError> {
         if self.resized {
-            let size = window.inner_size();
-
             self.surface.configure(
                 &self.device,
                 &wgpu::SurfaceConfiguration {
                     usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
                     format: self.format,
-                    width: size.width,
-                    height: size.height,
+                    width: self.size.width,
+                    height: self.size.height,
                     present_mode: wgpu::PresentMode::Mailbox,
                 },
             );
@@ -227,8 +230,15 @@ where
                 let renderer = &mut self.renderer;
                 let mut device = &mut self.device;
                 let mut staging_belt = &mut self.staging_belt;
-                let viewport = &mut self.viewport;
+
+                let scale_factor = window.scale_factor();
+                let viewport = Viewport::with_physical_size(
+                    Size::new(self.size.width, self.size.height),
+                    scale_factor,
+                );
+
                 let debug = &mut self.debug;
+
                 renderer.with_primitives(|backend, primitive| {
                     backend.present(
                         &mut device,
@@ -285,11 +295,16 @@ where
         self.state.is_queue_empty()
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, window: &Window) {
+        let viewport = Viewport::with_physical_size(
+            Size::new(self.size.width, self.size.height),
+            window.scale_factor(),
+        );
+
         let cursor_position =
-            conversion::cursor_position(self.cursor_position, self.viewport.scale_factor());
+            conversion::cursor_position(self.cursor_position, viewport.scale_factor());
         let _ = self.state.update(
-            self.viewport.logical_size(),
+            viewport.logical_size(),
             cursor_position,
             &mut self.renderer,
             &mut self.clipboard,

@@ -77,14 +77,17 @@ impl Program for Controls {
             .width(Length::Fill)
             .height(Length::Fill)
             .align_items(Alignment::Start)
+            .push(Column::new().padding(10)) // left padding
             .push(
                 Column::new()
                     .width(Length::Fill)
                     .align_items(Alignment::Start)
+                    .push(Column::new().padding(30)) // top padding
                     .push(
                         Column::new()
                             .padding(10)
                             .spacing(10)
+                            .push(Text::new("RuinX PoC").color(Color::WHITE).size(40))
                             .push(Text::new("Background color").color(Color::WHITE))
                             .push(sliders)
                             .push(

@@ -3,7 +3,7 @@ use futures::executor::block_on;
 use iced_wgpu::Viewport;
 use iced_winit::{
     futures,
-    winit::{self, event::ModifiersState, window::Window},
+    winit::{self, dpi::PhysicalSize, event::ModifiersState, window::Window},
     Size,
 };
 
@@ -31,9 +31,9 @@ where
         App { state: None }
     }
 
-    fn resize(&mut self, viewport: Viewport) {
+    fn resize(&mut self, new_size: PhysicalSize<u32>) {
         match &mut self.state {
-            Some(s) => s.resize(viewport),
+            Some(s) => s.resize(new_size),
             _ => {}
         }
     }
@@ -74,9 +74,9 @@ where
         }
     }
 
-    fn update(&mut self) {
+    fn update(&mut self, window: &Window) {
         match &mut self.state {
-            Some(s) => s.update(),
+            Some(s) => s.update(window),
             _ => {}
         }
     }
@@ -121,10 +121,7 @@ where
                         modifiers = new_modifiers;
                     }
                     WindowEvent::Resized(new_size) => {
-                        app.resize(Viewport::with_physical_size(
-                            Size::new(new_size.width, new_size.height),
-                            window.scale_factor(),
-                        ));
+                        app.resize(new_size);
                     }
                     WindowEvent::CloseRequested => {
                         *control_flow = ControlFlow::Exit;
@@ -144,7 +141,7 @@ where
                 // If there are events pending
                 if !app.is_queue_empty() {
                     // We update iced
-                    let _ = app.update();
+                    let _ = app.update(&window);
                     // and request a redraw
                     window.request_redraw();
                 }
